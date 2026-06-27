@@ -2,6 +2,17 @@
 // TASTATURKÜRZEL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { activateTool } from './09-tools.js';
+import { saveProject, saveProjectAs } from './16-file-ops.js';
+import { openFileManager } from './19-file-manager.js';
+import { restoreHistory, saveHistory } from './14-history.js';
+import { updatePropsPanel } from './12-props-panel.js';
+import { copySelected, pasteClipboard, duplicateSelected, _polyFinish } from './28-tools-extra.js';
+import { matchSC } from './17-shortcuts.js';
+import { _applyAspectLock, _arrowStep } from './23-grid.js';
+import { setStatus } from './03-status-log.js';
+
 document.addEventListener('keydown', e => {
   // Escape: Werkzeug deaktivieren
   if (e.key === 'Escape') {

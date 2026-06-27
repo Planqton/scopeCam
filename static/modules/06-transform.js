@@ -1,3 +1,8 @@
+import { S } from './00-state.js';
+import { drawGrid } from './23-grid.js';
+import { drawGuides } from './24-guides.js';
+import { drawRulers } from './22-rulers.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZOOM + PAN
@@ -7,7 +12,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const VIEW_KEY  = 'scopecam_view_v1';
-const ZOOM_MIN  = 0.1, ZOOM_MAX = 8.0;
+export const ZOOM_MIN = 0.1;
+export const ZOOM_MAX = 8.0;
 S.zoomLevel   = 1.0;
 S.panX        = 0, S.panY = 0;
 S.isPanning   = false;
@@ -18,14 +24,14 @@ function saveViewState() {
   try { localStorage.setItem(VIEW_KEY, JSON.stringify({ z: S.zoomLevel, x: S.panX, y: S.panY })); } catch (_) {}
 }
 
-function loadViewState() {
+export function loadViewState() {
   try {
     const v = JSON.parse(localStorage.getItem(VIEW_KEY));
     if (v) { S.zoomLevel = v.z ?? 1; S.panX = v.x ?? 0; S.panY = v.y ?? 0; }
   } catch (_) {}
 }
 
-function applyTransform() {
+export function applyTransform() {
   const w = document.getElementById('canvasWrapper');
   if (S.zoomLevel === 1 && S.panX === 0 && S.panY === 0) {
     w.style.transform = '';
@@ -41,12 +47,12 @@ function applyTransform() {
   drawRulers();
 }
 
-function setZoom(nz) {
+export function setZoom(nz) {
   S.zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nz));
   applyTransform();
 }
 
-function resetView() { S.panX = 0; S.panY = 0; S.zoomLevel = 1; applyTransform(); }
+export function resetView() { S.panX = 0; S.panY = 0; S.zoomLevel = 1; applyTransform(); }
 
 document.getElementById('zoomInBtn').addEventListener('click',      () => setZoom(S.zoomLevel * 1.25));
 document.getElementById('zoomOutBtn').addEventListener('click',     () => setZoom(S.zoomLevel / 1.25));

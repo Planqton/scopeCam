@@ -1,3 +1,10 @@
+import { S } from './00-state.js';
+import { saveHistory, CUSTOM_PROPS, restoreHistory } from './14-history.js';
+import { tabById, saveTabs, renderTabBar, loadCanvasFromJSON } from './08-tabs.js';
+import { refreshLayersList, loadLayersFromTab } from './13-layers.js';
+import { setStatus, scopeLog } from './03-status-log.js';
+import { drawGuides } from './24-guides.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATEI-OPERATIONEN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -79,7 +86,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   setStatus(`✓ ${fn} exportiert`);
 });
 
-function timestamp() {
+export function timestamp() {
   return new Date().toISOString().slice(0, 19).replace(/:/g, '-');
 }
 
@@ -99,14 +106,14 @@ const _crc32Table = (() => {
   }
   return t;
 })();
-function _crc32(buf) {
+export function _crc32(buf) {
   let crc = 0xFFFFFFFF;
   for (let i = 0; i < buf.length; i++) crc = _crc32Table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
 // Uint8Array → Base64 (chunked, kein Stack-Overflow bei großen Dateien)
-function _u8ToB64(bytes) {
+export function _u8ToB64(bytes) {
   let s = '';
   const sz = 0x8000;
   for (let i = 0; i < bytes.length; i += sz)
@@ -115,7 +122,7 @@ function _u8ToB64(bytes) {
 }
 
 // PNG: iTXt-Chunk vor IEND einfügen
-function _pngInjectITXt(png, keyword, text) {
+export function _pngInjectITXt(png, keyword, text) {
   const enc = new TextEncoder();
   const kw  = enc.encode(keyword);
   const tx  = enc.encode(text);
@@ -146,7 +153,7 @@ function _pngInjectITXt(png, keyword, text) {
 }
 
 // PNG: iTXt-Chunk lesen
-function _pngReadITXt(png, keyword) {
+export function _pngReadITXt(png, keyword) {
   const dec = new TextDecoder();
   let pos = 8;
   while (pos + 12 <= png.length) {
@@ -169,7 +176,7 @@ function _pngReadITXt(png, keyword) {
 }
 
 // ── Speichern ─────────────────────────────────────────────────────────────────
-async function _buildProjectBytes() {
+export async function _buildProjectBytes() {
   // 1. Composites: mit Objekten (sichtbar in Paint.NET) + nur Frame (für ScopeCam-Hintergrund)
   const composite = await captureComposite(true);
   if (!composite) { alert('Kein Bild vorhanden'); return; }
@@ -206,14 +213,14 @@ async function _buildProjectBytes() {
 S.currentSavePath = null;
 let _savedHistoryIdx = -1;  // S.historyIdx zum Zeitpunkt des letzten Speicherns
 
-function _markSaved() {
+export function _markSaved() {
   _savedHistoryIdx = S.historyIdx;
   const tab = tabById(S.activeTabId);
   if (tab) tab._savedHistoryIdx = S.historyIdx;
   _updateDirtyIndicator();
 }
 
-function _isDirty() {
+export function _isDirty() {
   return S.historyIdx !== _savedHistoryIdx;
 }
 
@@ -238,14 +245,14 @@ function _updateDirtyIndicator() {
   });
 }
 
-function _setSavePath(path) {
+export function _setSavePath(path) {
   S.currentSavePath = path || null;
   const tab = tabById(S.activeTabId);
   if (tab) tab.savePath = path || null;
   _updateSaveBtn();
 }
 
-function _updateSaveBtn() {
+export function _updateSaveBtn() {
   const btn = document.getElementById('saveProjectBtn');
   if (S.currentSavePath) {
     btn.classList.remove('menu-item-dimmed');
@@ -256,7 +263,7 @@ function _updateSaveBtn() {
   }
 }
 
-async function saveProject() {
+export async function saveProject() {
   const pngBytes = await _buildProjectBytes();
   if (!pngBytes) return;
   if (S.currentSavePath) {
@@ -272,7 +279,7 @@ async function saveProject() {
   }
 }
 
-async function saveProjectAs() {
+export async function saveProjectAs() {
   const pngBytes = await _buildProjectBytes();
   if (!pngBytes) return;
   await openFileManager('save', pngBytes, S.currentSavePath ? S.currentSavePath.split('/').pop() : `projekt_${timestamp()}.scopecam`);
@@ -296,7 +303,7 @@ function _applyProjectData(p) {
   }
 }
 
-function loadProject(buf, serverPath) {
+export function loadProject(buf, serverPath) {
   const bytes = new Uint8Array(buf);
   const isPNG = bytes[0]===0x89 && bytes[1]===0x50 && bytes[2]===0x4E && bytes[3]===0x47;
 

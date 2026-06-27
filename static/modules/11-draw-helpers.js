@@ -1,8 +1,11 @@
+import { S } from './00-state.js';
+import { getColor, getWidth } from './09-tools.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEICHEN-HELPER (Pfeil, Bemaßung)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function addArrow(x1, y1, x2, y2, color, strokeWidth) {
+export function addArrow(x1, y1, x2, y2, color, strokeWidth) {
   const angle   = Math.atan2(y2 - y1, x2 - x1);
   const headLen = Math.max(12, strokeWidth * 4);
   const line    = new fabric.Line([x1, y1, x2, y2], { stroke: color, strokeWidth });
@@ -16,19 +19,19 @@ function addArrow(x1, y1, x2, y2, color, strokeWidth) {
   return grp;
 }
 
-function getDimAutoLabel(px) {
+export function getDimAutoLabel(px) {
   return S.settings.scale_px_per_mm
     ? (px / S.settings.scale_px_per_mm).toFixed(2) + ' mm'
     : Math.round(px) + ' px';
 }
 
-function applyDimLabel(obj) {
+export function applyDimLabel(obj) {
   const label = obj.dimLabelOverride || getDimAutoLabel(obj.dimPx || 0);
   const textObj = obj._objects?.find(o => o.type === 'text');
   if (textObj) { textObj.set('text', label); obj.dirty = true; S.canvas.renderAll(); }
 }
 
-function addDimension(x1, y1, x2, y2, color, strokeWidth) {
+export function addDimension(x1, y1, x2, y2, color, strokeWidth) {
   const dx = x2 - x1, dy = y2 - y1;
   const dist = Math.sqrt(dx * dx + dy * dy);
   const angle = Math.atan2(dy, dx);

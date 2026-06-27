@@ -1,3 +1,11 @@
+import { S } from './00-state.js';
+import { CUSTOM_PROPS, saveHistory, refreshTimeline, restoreHistory } from './14-history.js';
+import { stopCameraStream, applyDevice } from './05-video.js';
+import { syncCanvasSize } from './07-canvas-layout.js';
+import { loadLayersFromTab, refreshLayersList } from './13-layers.js';
+import { _updateSaveBtn } from './16-file-ops.js';
+import { setStatus } from './03-status-log.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB MANAGER
 // Jeder Tab hat eigene Canvas-Annotationen + optionalen Snapshot als Hintergrund.
@@ -12,10 +20,10 @@ const TAB_ACTIVE_KEY = 'scopecam_tab_active_v1';
 S.tabs        = [];
 S.activeTabId = null;
 
-function tabById(id)  { return S.tabs.find(t => t.id === id) || null; }
+export function tabById(id)  { return S.tabs.find(t => t.id === id) || null; }
 function newTabId()   { return 'tab_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5); }
 
-function saveTabs() {
+export function saveTabs() {
   try {
     localStorage.setItem(TAB_KEY, JSON.stringify(S.tabs));
     localStorage.setItem(TAB_ACTIVE_KEY, S.activeTabId || '');
@@ -29,7 +37,7 @@ function saveTabs() {
   }
 }
 
-function loadTabsFromStorage() {
+export function loadTabsFromStorage() {
   try {
     const raw = JSON.parse(localStorage.getItem(TAB_KEY));
     if (Array.isArray(raw) && raw.length > 0) {
@@ -42,18 +50,18 @@ function loadTabsFromStorage() {
   return false;
 }
 
-function createTab(name, backgroundDataUrl = null, canvasJSON = null) {
+export function createTab(name, backgroundDataUrl = null, canvasJSON = null) {
   const defaultLayers = [{ id: 'default', name: 'Standard', visible: true, collapsed: false }];
   const tab = { id: newTabId(), name, backgroundDataUrl, canvasJSON, layers: defaultLayers };
   S.tabs.push(tab);
   return tab;
 }
 
-function getCurrentTabCanvasJSON() {
+export function getCurrentTabCanvasJSON() {
   return JSON.stringify(S.canvas.toJSON(CUSTOM_PROPS));
 }
 
-function _applyObjLocks(o) {
+export function _applyObjLocks(o) {
   o.lockMovementX = !!(o.lockPosition);
   o.lockMovementY = !!(o.lockPosition);
   o.lockScalingX  = !!(o.lockSize);
@@ -65,7 +73,7 @@ function _applyObjLocks(o) {
   }
 }
 
-function applyLayerVisibilityToObjects() {
+export function applyLayerVisibilityToObjects() {
   S.canvas.forEachObject(o => {
     const layer      = S.layers.find(l => l.id === (o.layerId || 'default'));
     const lv         = layer ? layer.visible : true;
@@ -76,7 +84,7 @@ function applyLayerVisibilityToObjects() {
   });
 }
 
-function loadCanvasFromJSON(json) {
+export function loadCanvasFromJSON(json) {
   if (!json) {
     S.canvas.clear();
     S.canvas.renderAll();
@@ -91,7 +99,7 @@ function loadCanvasFromJSON(json) {
   });
 }
 
-function switchToTab(id) {
+export function switchToTab(id) {
   // Aktuellen Tab-Canvas + Ebenen speichern
   if (S.activeTabId) {
     const cur = tabById(S.activeTabId);
@@ -139,7 +147,7 @@ function _openDefaultTab() {
   switchToTab(tab.id);
 }
 
-function _tabHasUnsavedChanges(tab) {
+export function _tabHasUnsavedChanges(tab) {
   if (!tab) return false;
   const savedIdx = tab._savedHistoryIdx ?? -1;
   const curIdx   = tab.id === S.activeTabId ? S.historyIdx : (tab.historyIdx ?? -1);
@@ -170,7 +178,7 @@ function closeTab(id) {
   if (S.tabs.length === 0) _openDefaultTab();
 }
 
-function renderTabBar() {
+export function renderTabBar() {
   const list = document.getElementById('tabList');
   list.innerHTML = '';
 
@@ -244,7 +252,7 @@ document.getElementById('tabAddBtn').addEventListener('click', () => {
   switchToTab(newTab.id);
 });
 
-function loadSnapshotBackground(dataUrl) {
+export function loadSnapshotBackground(dataUrl) {
   const img   = new Image();
   img.onload  = () => {
     S.videoCanvas.width  = img.naturalWidth;

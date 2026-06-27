@@ -1,4 +1,12 @@
 
+import { S } from './00-state.js';
+import { ZOOM_MAX, applyTransform } from './06-transform.js';
+import { getImgOffset } from './22-rulers.js';
+import { setStatus } from './03-status-log.js';
+import { saveHistory, CUSTOM_PROPS } from './14-history.js';
+import { refreshLayersList, getObjLabel } from './13-layers.js';
+import { drawGrid, saveGridState } from './23-grid.js';
+
 // ── 1. Stream einfrieren ─────────────────────────────────────────────────────
 S._streamFrozen = false;
 document.getElementById('freezeBtn').addEventListener('click', () => {
@@ -11,7 +19,7 @@ document.getElementById('freezeBtn').addEventListener('click', () => {
 });
 
 // ── 2. Winkeleinrasten beim Zeichnen ─────────────────────────────────────────
-function _snapAngle(x1, y1, x2, y2) {
+export function _snapAngle(x1, y1, x2, y2) {
   const dx = x2 - x1, dy = y2 - y1;
   const len = Math.sqrt(dx * dx + dy * dy);
   if (len < 2) return { x: x2, y: y2 };
@@ -25,7 +33,7 @@ const _sfCanvas = document.getElementById('snapFeedbackCanvas');
 const _sfCtx    = _sfCanvas?.getContext('2d');
 let   _sfTimer  = null;
 
-function _showSnapFeedback(canvasX, canvasY) {
+export function _showSnapFeedback(canvasX, canvasY) {
   if (!_sfCtx || !_sfCanvas) return;
   const wrapper = document.getElementById('canvasWrapper');
   const { ox, oy } = getImgOffset();
@@ -53,7 +61,7 @@ function _showSnapFeedback(canvasX, canvasY) {
 S.canvas.on('mouse:up', () => { _sfCtx?.clearRect(0, 0, _sfCanvas.width, _sfCanvas.height); });
 
 // ── 4. Zoom auf Auswahl ───────────────────────────────────────────────────────
-function zoomToSelection() {
+export function zoomToSelection() {
   const objs = S.canvas.getActiveObjects();
   if (!objs.length) return;
   const bbs = objs.map(o => o.getBoundingRect(true));
@@ -83,7 +91,7 @@ document.getElementById('zoomToSelMenu').addEventListener('click', zoomToSelecti
 
 // ── 5. Hover-Highlight im Objekt-Manager ──────────────────────────────────────
 let _hoverHighlightObj = null;
-function _flashObject(obj, on) {
+export function _flashObject(obj, on) {
   if (!obj || !obj.visible) return;
   if (on) {
     _hoverHighlightObj = { obj, origOpacity: obj.opacity };
@@ -170,7 +178,7 @@ S.canvas.on('mouse:down', opt => {
 S._measurePt1 = null;
 S._measureOverlay = document.getElementById('measureOverlay');
 
-function _measureShow(x1, y1, x2, y2, screenX, screenY) {
+export function _measureShow(x1, y1, x2, y2, screenX, screenY) {
   const dx = x2 - x1, dy = y2 - y1;
   const px = Math.sqrt(dx * dx + dy * dy);
   const label = S.settings.scale_px_per_mm > 0
@@ -186,7 +194,7 @@ function _measureShow(x1, y1, x2, y2, screenX, screenY) {
 S._calloutAnchor = null;
 S._calloutPreviewLine = null;
 
-function _calloutClean() {
+export function _calloutClean() {
   if (S._calloutPreviewLine) { S.canvas.remove(S._calloutPreviewLine); S._calloutPreviewLine = null; }
 }
 

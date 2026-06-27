@@ -1,8 +1,15 @@
+import { S } from './00-state.js';
+import { clearPropsPanel, showPropsSection } from './12-props-panel.js';
+import { savePanelStates } from './02-panels.js';
+import { _updateMobTools } from './33-mobile.js';
+import { _openCalibrateModal, _polyCleanPreview, _polyFinish } from './28-tools-extra.js';
+import { setStatus } from './03-status-log.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WERKZEUGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TOOL_NAMES = {
+export const TOOL_NAMES = {
   select: 'Auswahl', hand: 'Verschieben', line: 'Linie', arrow: 'Pfeil',
   dimension: 'Bemaßung', rect: 'Rechteck', circle: 'Kreis', text: 'Text', freehand: 'Freihand',
   polyline: 'Polylinie', calibrate: 'Kalibrierung', measure: 'Schnellmessung', callout: 'Callout',
@@ -22,7 +29,7 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
   });
 });
 
-function activateTool(tool) {
+export function activateTool(tool) {
   // Measure/Callout zurücksetzen
   if (S.currentTool === 'measure')  { S._measurePt1 = null; S._measureOverlay.style.display = 'none'; }
   if (S.currentTool === 'callout')  { _calloutClean(); S._calloutAnchor = null; }
@@ -86,12 +93,12 @@ function activateTool(tool) {
   // Eigenschaften-Panel automatisch einblenden (nicht bei Hand-Tool)
   if (tool !== 'hand' && !S.panelStates['props'].open) {
     S.panelStates['props'].open = true;
-    applyPanel('props');
+    S.applyPanel('props');
     savePanelStates();
   }
 }
 
-function deactivateTool() {
+export function deactivateTool() {
   // Polyline abbrechen wenn Werkzeug gewechselt wird
   if (S.currentTool === 'polyline') {
     _polyCleanPreview();
@@ -117,14 +124,14 @@ function deactivateTool() {
 
   // Eigenschaften-Panel automatisch ausblenden
   S.panelStates['props'].open = false;
-  applyPanel('props');
+  S.applyPanel('props');
   savePanelStates();
 }
 
-function getColor()    { return document.getElementById('colorPicker').value; }
-function getWidth()    { return parseInt(document.getElementById('lineWidth').value, 10); }
-function getFontSize() { return parseInt(document.getElementById('fontSize').value, 10); }
-function getFontFamily() { return document.getElementById('propFontFamily').value || 'monospace'; }
+export function getColor()    { return document.getElementById('colorPicker').value; }
+export function getWidth()    { return parseInt(document.getElementById('lineWidth').value, 10); }
+export function getFontSize() { return parseInt(document.getElementById('fontSize').value, 10); }
+export function getFontFamily() { return document.getElementById('propFontFamily').value || 'monospace'; }
 
 document.getElementById('lineWidth').addEventListener('input', function () {
   if (S.canvas.isDrawingMode) S.canvas.freeDrawingBrush.width = getWidth();

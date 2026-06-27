@@ -2,6 +2,13 @@
 // PCB-KANTENANALYSE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { getImgOffset } from './22-rulers.js';
+import { refreshLayersList } from './13-layers.js';
+import { saveHistory } from './14-history.js';
+import { setStatus } from './03-status-log.js';
+import { _renderStatusKeys } from './17-shortcuts.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HILFSLINIEN (Guide Lines)
 // Horizontal aus rulerH ziehen, Vertikal aus rulerV ziehen.
@@ -14,10 +21,10 @@ S.guidesVisible = true;
 S.guidesSnap    = false;
 S.selectedGuide = null; // {axis, idx} — aktuell ausgewählte Hilfslinie
 S._guidesCollapsed = true;
-function _saveGuidesCollapsed() { try { localStorage.setItem('scopecam_guides_collapsed', JSON.stringify(S._guidesCollapsed)); } catch(_) {} }
+export function _saveGuidesCollapsed() { try { localStorage.setItem('scopecam_guides_collapsed', JSON.stringify(S._guidesCollapsed)); } catch(_) {} }
 function _loadGuidesCollapsed() { try { S._guidesCollapsed = JSON.parse(localStorage.getItem('scopecam_guides_collapsed')) ?? true; } catch(_) { S._guidesCollapsed = true; } }
 
-function saveGuides() {
+export function saveGuides() {
   try { localStorage.setItem(GUIDE_KEY, JSON.stringify({ lines: S.guideLines, visible: S.guidesVisible, snap: S.guidesSnap })); } catch (_) {}
 }
 function loadGuides() {
@@ -40,7 +47,7 @@ function clientToCanvas(clientX, clientY) {
   return { x: (localX - ox) / scaleX, y: (localY - oy) / scaleY };
 }
 
-function drawGuides(previewAxis, previewPos, highlight) {
+export function drawGuides(previewAxis, previewPos, highlight) {
   const gc      = document.getElementById('guideCanvas');
   const wrapper = document.getElementById('canvasWrapper');
   const vc      = document.getElementById('videoCanvas');
@@ -92,7 +99,7 @@ function drawGuides(previewAxis, previewPos, highlight) {
 
 S.canvas.on('after:render', () => drawGuides(null, null, S.selectedGuide));
 
-function _flashGuide(axis, idx) {
+export function _flashGuide(axis, idx) {
   let step = 0;
   const colors = ['#ff6b35', '#1bc9e9'];
   const id = setInterval(() => {
@@ -116,7 +123,7 @@ S.canvas.on('object:moving', e => {
   }
 });
 
-function initGuides() {
+export function initGuides() {
   loadGuides();
   _loadGuidesCollapsed();
   drawGuides();

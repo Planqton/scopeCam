@@ -1,3 +1,9 @@
+import { S } from './00-state.js';
+import { saveHistory, CUSTOM_PROPS } from './14-history.js';
+import { setStatus } from './03-status-log.js';
+import { drawGuides, saveGuides, _saveGuidesCollapsed } from './24-guides.js';
+import { _flashObject } from './29-feature-batch2.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // EBENEN-MANAGER
@@ -8,7 +14,7 @@
 
 S.layers = []; // Aktive Ebenen des offenen Tabs
 
-function ensureLayers() {
+export function ensureLayers() {
   if (!Array.isArray(S.layers)) S.layers = [];
   const def = S.layers.find(l => l.id === 'default');
   if (!def) {
@@ -18,17 +24,17 @@ function ensureLayers() {
   }
 }
 
-function saveCurrentTabLayers() {
+export function saveCurrentTabLayers() {
   const tab = tabById(S.activeTabId);
   if (tab) { tab.layers = JSON.parse(JSON.stringify(S.layers)); saveTabs(); }
 }
 
-function loadLayersFromTab(tab) {
+export function loadLayersFromTab(tab) {
   S.layers = (tab?.layers && tab.layers.length > 0) ? JSON.parse(JSON.stringify(tab.layers)) : [];
   ensureLayers();
 }
 
-function createLayer(name) {
+export function createLayer(name) {
   ensureLayers();
   const lname = name || ('Ebene ' + S.layers.length);
   const layer = { id: 'layer_' + Date.now(), name: lname, visible: true, collapsed: false };
@@ -40,7 +46,7 @@ function createLayer(name) {
   return layer;
 }
 
-function deleteLayer(layerId) {
+export function deleteLayer(layerId) {
   if (layerId === 'default') return;
   if (S.layers.length <= 1) return;
   const lname = S.layers.find(l => l.id === layerId)?.name || layerId;
@@ -69,7 +75,7 @@ function setLayerVisible(layerId, visible) {
   refreshLayersList();
 }
 
-function setObjectVisible(obj, visible) {
+export function setObjectVisible(obj, visible) {
   obj.objVisible     = visible;
   const layer        = S.layers.find(l => l.id === (obj.layerId || 'default'));
   const layerVisible = layer ? layer.visible : true;
@@ -84,7 +90,7 @@ function setObjectVisible(obj, visible) {
   refreshLayersList();
 }
 
-function moveObjectToLayer(obj, layerId) {
+export function moveObjectToLayer(obj, layerId) {
   obj.layerId = layerId;
   const layer        = S.layers.find(l => l.id === layerId);
   const layerVisible = layer ? layer.visible : true;
@@ -106,7 +112,7 @@ function hideCtxMenu() {
   if (ctxMenuEl) { ctxMenuEl.remove(); ctxMenuEl = null; }
 }
 
-function showCtxMenu(e, items) {
+export function showCtxMenu(e, items) {
   hideCtxMenu();
   e.preventDefault();
   e.stopPropagation();
@@ -160,7 +166,7 @@ const TYPE_LABELS = {
   group: 'Gruppe', path: 'Freihand', triangle: 'Dreieck',
 };
 
-function getObjLabel(obj)     { return obj.customName || TYPE_LABELS[obj.type] || 'Objekt'; }
+export function getObjLabel(obj)     { return obj.customName || TYPE_LABELS[obj.type] || 'Objekt'; }
 function getObjTypeBadge(obj) { return TYPE_LABELS[obj.type] || obj.type || '?'; }
 
 function makeObjNameEditor(nameEl, obj) {
@@ -205,7 +211,7 @@ function makeLayerNameEditor(nameEl, layer) {
   });
 }
 
-function refreshLayersList() {
+export function refreshLayersList() {
   ensureLayers();
   const list    = document.getElementById('layersList');
   const objects = S.canvas.getObjects();

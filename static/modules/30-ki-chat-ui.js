@@ -1,3 +1,8 @@
+import { S } from './00-state.js';
+import { buildKiSystemPrompt, callKiLLM, parseKiResponse, executeAIActions, saveKiChat } from './27-ki-core.js';
+import { detectKiProvider } from './26-ki-settings.js';
+import { setStatus } from './03-status-log.js';
+
 // ── Chat UI ──────────────────────────────────────────────────────────────────
 
 function kiAppendThinking(thinkingText) {
@@ -15,7 +20,7 @@ function kiAppendThinking(thinkingText) {
   log.scrollTop = log.scrollHeight;
 }
 
-function kiAppendMessage(role, text, actions, thinking) {
+export function kiAppendMessage(role, text, actions, thinking) {
   const el  = document.getElementById('kiMessages');
   const msg = document.createElement('div');
   msg.className = 'ki-msg ki-msg-' + role;
@@ -61,7 +66,7 @@ function kiSetStatus(text, color) {
   if (text !== null) bar.textContent = text;
 }
 
-function getKiRegionInCanvasCoords() {
+export function getKiRegionInCanvasCoords() {
   if (!S.kiRegionRect) return null;
   const videoCanvas = document.getElementById('videoCanvas');
   const wrapper     = document.getElementById('canvasWrapper');
@@ -124,7 +129,7 @@ function captureKiFrame() {
   return tmp.toDataURL('image/jpeg', 0.95);
 }
 
-async function sendKiMessage() {
+export async function sendKiMessage() {
   const input = document.getElementById('kiInput');
   const text  = input.value.trim();
   if (!text) return;
@@ -156,7 +161,7 @@ async function sendKiMessage() {
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...kiChatHistory,
+    ...S.kiChatHistory,
     { role: 'user', content: userContent },
   ];
 
@@ -219,7 +224,7 @@ async function sendKiMessage() {
   document.getElementById('kiInput').focus();
 }
 
-function updateKiPanel() {
+export function updateKiPanel() {
   const ready = !!(S.kiSettings.endpoint && S.kiSettings.model);
   document.getElementById('kiPanelHint').style.display = ready ? 'none' : '';
   const chat = document.getElementById('kiChat');
@@ -233,7 +238,7 @@ S.kiRegionRect = null; // {rx, ry, rw, rh} relativ zu canvasWrapper
 
 const KI_REGION_KEY = 'scopecam_ki_region_v1';
 
-function createRegionBadge(rw, rh) {
+export function createRegionBadge(rw, rh) {
   const preview = document.createElement('div');
   preview.className = 'ki-region-badge';
   preview.style.cursor = 'pointer';
@@ -296,7 +301,7 @@ function saveKiRegion() {
   } catch (_) {}
 }
 
-function restoreKiRegion() {
+export function restoreKiRegion() {
   try {
     const saved = JSON.parse(localStorage.getItem(KI_REGION_KEY));
     if (!saved) return;
@@ -360,7 +365,7 @@ function startKiRegionSelect() {
       }
 
       // Nur Koordinaten speichern — Bild wird beim Senden frisch aufgenommen
-      kiRegionRect = { rx, ry, rw, rh };
+      S.kiRegionRect = { rx, ry, rw, rh };
       saveKiRegion();
       document.getElementById('kiRegionStatus').textContent =
         `⊡ ${Math.round(rw)}×${Math.round(rh)}px (live)`;
@@ -389,7 +394,7 @@ function startKiRegionSelect() {
 
 document.getElementById('kiRegionBtn').addEventListener('click', startKiRegionSelect);
 document.getElementById('kiClearBtn').addEventListener('click', () => {
-  kiChatHistory = [];
+  S.kiChatHistory = [];
   saveKiChat();
   document.getElementById('kiMessages').innerHTML = '';
 });

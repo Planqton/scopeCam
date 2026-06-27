@@ -3,7 +3,31 @@
 // Stellt gespeicherte Tabs und den aktiven Tab wieder her.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function init() {
+import { S } from './00-state.js';
+import { _loadSettingsFromServer } from './01-server-settings.js';
+import { loadPanelStates, savePanelStates } from './02-panels.js';
+import { scopeLog, setStatus } from './03-status-log.js';
+import { loadCanvasFromJSON } from './04-canvas-state.js';
+import { applyDevice, stopCameraStream } from './05-video.js';
+import { applyTransform, loadViewState, resetView } from './06-transform.js';
+import { syncCanvasSize } from './07-canvas-layout.js';
+import { loadTabsFromStorage, renderTabBar, loadSnapshotBackground, createTab, tabById, saveTabs } from './08-tabs.js';
+import { activateTool } from './09-tools.js';
+import { loadLayersFromTab, refreshLayersList } from './13-layers.js';
+import { saveHistory, restoreHistory, refreshTimeline } from './14-history.js';
+import { _updateSaveBtn, _markSaved } from './16-file-ops.js';
+import { renderScManager, _renderStatusKeys } from './17-shortcuts.js';
+import { openFileManager } from './19-file-manager.js';
+import { applyDesign, loadDesign, buildDesignControls } from './20-design.js';
+import { populateSettings, updateScaleStatus, loadSpPos } from './21-settings-ui.js';
+import { drawRulers } from './22-rulers.js';
+import { loadGridState, applyGridState } from './23-grid.js';
+import { initGuides } from './24-guides.js';
+import { loadKiSettings, populateKiSettings } from './26-ki-settings.js';
+import { loadKiPerms, loadKiChat } from './27-ki-core.js';
+import { restoreKiRegion, createRegionBadge, updateKiPanel } from './30-ki-chat-ui.js';
+
+export async function init() {
   // Einstellungen vom Server laden bevor alles andere initialisiert wird
   await _loadSettingsFromServer();
   // Design + View-State zuerst laden, damit Layout sofort korrekt ist

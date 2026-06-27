@@ -68,10 +68,11 @@
  */
 
 /** @type {AppState} */
-const S = {
+export const S = {
 
   // ── Canvas & Core State (04-canvas-state.js) ────────────────────────────────
   canvas:       null,    // fabric.Canvas — gesetzt in 04-canvas-state.js
+  applyPanel:   null,    // S.applyPanel = function(id) {...} — gesetzt in 02-panels.js
   settings:     {},      // Kamera- & App-Einstellungen
   currentTool:  null,    // aktives Zeichenwerkzeug
   history:      [],      // [{json, label, time}, ...]
@@ -172,3 +173,5 @@ const S = {
   _suppressLinkExpand: false,
 
 };
+
+window.S = S; // console eval access

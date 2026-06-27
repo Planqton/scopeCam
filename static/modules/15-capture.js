@@ -1,3 +1,9 @@
+import { S } from './00-state.js';
+import { timestamp, saveProject } from './16-file-ops.js';
+import { openFileManager } from './19-file-manager.js';
+import { setStatus } from './03-status-log.js';
+import { tabById, createTab, switchToTab, getCurrentTabCanvasJSON } from './08-tabs.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CAPTURE (Snapshot & Aufnahme)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -8,7 +14,7 @@ let recordingActive = false;
 let recordingRAF    = null;
 
 // Gibt ein composites Canvas-Element zurück (Video + optional Annotationen).
-function captureComposite(withObjects) {
+export function captureComposite(withObjects) {
   return new Promise(resolve => {
     const w = S.videoCanvas.width  || S.videoCanvas.offsetWidth;
     const h = S.videoCanvas.height || S.videoCanvas.offsetHeight;

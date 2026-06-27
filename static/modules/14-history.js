@@ -1,9 +1,14 @@
+import { S } from './00-state.js';
+import { tabById, saveTabs, applyLayerVisibilityToObjects, loadCanvasFromJSON } from './08-tabs.js';
+import { refreshLayersList } from './13-layers.js';
+import { setStatus } from './03-status-log.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HISTORY (Undo/Redo) + AUTO-PERSISTENZ
 // Jede Änderung wird in den aktiven Tab gespeichert und in localStorage persistiert.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const CUSTOM_PROPS = ['customName', 'locked', 'layerId', 'objVisible', 'isDimension', 'dimPx', 'dimLabelOverride', 'linkGroup', 'objId', 'lockPosition', 'lockSize'];
+export const CUSTOM_PROPS = ['customName', 'locked', 'layerId', 'objVisible', 'isDimension', 'dimPx', 'dimLabelOverride', 'linkGroup', 'objId', 'lockPosition', 'lockSize'];
 
 const _TL_ICONS = {
   'Start': '🏁', 'Importiert': '📂', 'Linie': '╱', 'Pfeil': '→', 'Bemaßung': '↔',
@@ -16,7 +21,7 @@ const _TL_ICONS = {
 const MAX_HISTORY = 100;
 S._kiBatchMode = false; // KI-Aktionen zu einem einzigen History-Eintrag zusammenfassen
 
-function saveHistory(labelArg) {
+export function saveHistory(labelArg) {
   if (S._kiBatchMode) return;
   const label = typeof labelArg === 'string' ? labelArg : (S._nextLabel || 'Bearbeitet');
   S._nextLabel = null;
@@ -42,7 +47,7 @@ function saveHistory(labelArg) {
   _updateDirtyIndicator();
 }
 
-function restoreHistory(idx) {
+export function restoreHistory(idx) {
   const entry = S.history[idx];
   if (!entry) return;
   // fabric v6: loadFromJSON returns a Promise (2nd arg is now reviver, not callback)
@@ -69,7 +74,7 @@ function deleteHistoryEntry(i) {
   restoreHistory(S.historyIdx);
 }
 
-function refreshTimeline() {
+export function refreshTimeline() {
   const list = document.getElementById('timelineList');
   if (!list) return;
   list.innerHTML = '';

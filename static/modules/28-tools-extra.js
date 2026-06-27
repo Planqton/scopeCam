@@ -1,3 +1,11 @@
+import { S } from './00-state.js';
+import { getColor, getWidth, activateTool } from './09-tools.js';
+import { saveHistory, CUSTOM_PROPS } from './14-history.js';
+import { refreshLayersList, getObjLabel } from './13-layers.js';
+import { setStatus } from './03-status-log.js';
+import { updatePropsPanel } from './12-props-panel.js';
+import { updateScaleStatus } from './21-settings-ui.js';
+
 // ── Copy / Paste / Duplicate ─────────────────────────────────────────────────
 S._clipboard = null;
 
@@ -15,7 +23,7 @@ function _freshIds(cloned) {
   else fixObj(cloned);
 }
 
-function copySelected() {
+export function copySelected() {
   const objs = S.canvas.getActiveObjects();
   if (!objs.length) return;
   const active = S.canvas.getActiveObject();
@@ -26,7 +34,7 @@ function copySelected() {
   });
 }
 
-function _addClonedToCanvas(cloned, label, statusMsg) {
+export function _addClonedToCanvas(cloned, label, statusMsg) {
   S.canvas.discardActiveObject();
   cloned.set({ left: cloned.left + 20, top: cloned.top + 20 });
   _freshIds(cloned);
@@ -45,13 +53,13 @@ function _addClonedToCanvas(cloned, label, statusMsg) {
   if (statusMsg) setStatus(statusMsg);
 }
 
-function pasteClipboard() {
+export function pasteClipboard() {
   if (!S._clipboard) return;
   // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
   S._clipboard.clone(CUSTOM_PROPS).then(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'));
 }
 
-function duplicateSelected() {
+export function duplicateSelected() {
   if (!S.canvas.getActiveObjects().length) return;
   // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
   S.canvas.getActiveObject().clone(CUSTOM_PROPS).then(cloned => _addClonedToCanvas(cloned, 'Dupliziert'));
@@ -62,7 +70,7 @@ document.getElementById('pasteBtn').addEventListener('click', pasteClipboard);
 document.getElementById('duplicateBtn').addEventListener('click', duplicateSelected);
 
 // ── SVG-Export ───────────────────────────────────────────────────────────────
-function exportSVG() {
+export function exportSVG() {
   const svgData = S.canvas.toSVG();
   const blob = new Blob([svgData], { type: 'image/svg+xml' });
   const url  = URL.createObjectURL(blob);
@@ -76,7 +84,7 @@ function exportSVG() {
 document.getElementById('exportSvgBtn').addEventListener('click', exportSVG);
 
 // ── Alignment Tools ──────────────────────────────────────────────────────────
-function alignObjects(mode) {
+export function alignObjects(mode) {
   const objs = S.canvas.getActiveObjects();
   if (objs.length < 2) return;
   // getBoundingRect gibt achsenparallele Box — Delta-Ansatz funktioniert auch für rotierte Objekte:
@@ -146,7 +154,7 @@ document.querySelectorAll('.align-btn').forEach(btn => {
 // ── Snap to Object ───────────────────────────────────────────────────────────
 S._snapToObjEnabled = true; // kann per Einstellungen deaktiviert werden
 
-function _getSnapPoints(other) {
+export function _getSnapPoints(other) {
   const br = other.getBoundingRect(true);
   const pts = [
     { x: br.left,                    y: br.top                     },
@@ -200,11 +208,11 @@ S._polyPts          = [];
 S._polyPreviewLine  = null;
 S._polyLinkId       = null;
 
-function _polyCleanPreview() {
+export function _polyCleanPreview() {
   if (S._polyPreviewLine) { S.canvas.remove(S._polyPreviewLine); S._polyPreviewLine = null; }
 }
 
-function _polyFinish() {
+export function _polyFinish() {
   _polyCleanPreview();
   // Temporäre Segmente entfernen
   S.canvas.getObjects().filter(o => o._polyTmp).forEach(o => S.canvas.remove(o));
@@ -244,32 +252,32 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Kalibrierungs-Assistent ──────────────────────────────────────────────────
-let _calPts = null; // {x1,y1,x2,y2} nach dem Zeichnen
+S._calPts = null; // {x1,y1,x2,y2} nach dem Zeichnen
 
-function _openCalibrateModal() {
+export function _openCalibrateModal() {
   const modal = document.getElementById('calibrateModal');
   modal.style.display = 'flex';
   document.getElementById('calibrateHint').textContent = 'Ziehe eine Linie über eine bekannte Strecke auf dem Canvas.';
   document.getElementById('calibrateInputRow').style.display = 'none';
   document.getElementById('calibrateOkBtn').style.display    = 'none';
   document.getElementById('calibrateMm').value = '';
-  _calPts = null;
+  S._calPts = null;
 }
 
 document.getElementById('calibrateCancelBtn').addEventListener('click', () => {
   document.getElementById('calibrateModal').style.display = 'none';
-  if (currentTool === 'calibrate') activateTool('select');
+  if (S.currentTool === 'calibrate') activateTool('select');
 });
 
 document.getElementById('calibrateOkBtn').addEventListener('click', () => {
   const mm  = parseFloat(document.getElementById('calibrateMm').value);
-  if (!mm || !_calPts) return;
-  const dx  = _calPts.x2 - _calPts.x1;
-  const dy  = _calPts.y2 - _calPts.y1;
+  if (!mm || !S._calPts) return;
+  const dx  = S._calPts.x2 - S._calPts.x1;
+  const dy  = S._calPts.y2 - S._calPts.y1;
   const px  = Math.sqrt(dx * dx + dy * dy);
-  settings.scale_px_per_mm = px / mm;
-  document.getElementById('scalePxMm').value = settings.scale_px_per_mm.toFixed(4);
-  applySettings();
+  S.settings.scale_px_per_mm = px / mm;
+  document.getElementById('scalePxMm').value = S.settings.scale_px_per_mm.toFixed(4);
+  updateScaleStatus();
   document.getElementById('calibrateModal').style.display = 'none';
   activateTool('select');
   setStatus(`Kalibriert: ${S.settings.scale_px_per_mm.toFixed(2)} px/mm`);

@@ -1,4 +1,4 @@
-'use strict';
+import { S } from './00-state.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVER-SETTINGS SYNC
@@ -29,7 +29,7 @@ localStorage.setItem = function(key, value) {
   if (key && key.startsWith('scopecam_')) _debouncedSync();
 };
 
-async function _loadSettingsFromServer() {
+export async function _loadSettingsFromServer() {
   try {
     const res = await fetch('/api/client-settings');
     if (!res.ok) return;

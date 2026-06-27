@@ -2,12 +2,14 @@
 // LINEALE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+
 const rulerH   = document.getElementById('rulerH');
 const rulerV   = document.getElementById('rulerV');
 const RULER_SZ = 22;
 const DPR      = () => window.devicePixelRatio || 1;
 
-function getImgOffset() {
+export function getImgOffset() {
   const wrapper = document.getElementById('canvasWrapper');
   return {
     ox: Math.round((wrapper.offsetWidth  - S.videoCanvas.offsetWidth)  / 2),
@@ -15,7 +17,7 @@ function getImgOffset() {
   };
 }
 
-function px2label(px, axis) {
+export function px2label(px, axis) {
   const unit = S.settings.ruler_unit || 'px';
   const ppm  = S.settings.scale_px_per_mm;
   const dim  = axis === 'x' ? S.videoCanvas.offsetWidth : S.videoCanvas.offsetHeight;
@@ -27,7 +29,7 @@ function px2label(px, axis) {
   }
 }
 
-function chooseStep(imgPx, Z = 1) {
+export function chooseStep(imgPx, Z = 1) {
   const unit = S.settings.ruler_unit || 'px';
   const ppm  = S.settings.scale_px_per_mm;
   const MIN_SCREEN = 8; // minimum visual screen pixels between ticks
@@ -43,7 +45,7 @@ function chooseStep(imgPx, Z = 1) {
   return { minorPx: minor * scale, majorPx: major * scale };
 }
 
-function getRulerColors() {
+export function getRulerColors() {
   const s = getComputedStyle(document.documentElement);
   const get = v => s.getPropertyValue(v).trim();
   const bg  = get('--clr-ruler-bg') || '#181818';
@@ -148,6 +150,6 @@ function drawVRuler(cursorImgY = null) {
   ctx.restore();
 }
 
-function drawRulers(cx = null, cy = null) { drawHRuler(cx); drawVRuler(cy); }
+export function drawRulers(cx = null, cy = null) { drawHRuler(cx); drawVRuler(cy); }
 
 

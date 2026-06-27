@@ -2,6 +2,8 @@
 // PCB LIVE-SNAP (Beta)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+
 S.pcbLiveSnapEnabled = (() => {
   try { const p = JSON.parse(localStorage.getItem('scopecam_pcblive_v1')); return !!(p?.enabled); } catch(_) { return false; }
 })();
@@ -19,7 +21,7 @@ document.getElementById('pcbLiveSnapCheckmark').textContent = S.pcbLiveSnapEnabl
   }
 })();
 
-function _savePcbLiveSettings() {
+export function _savePcbLiveSettings() {
   try {
     localStorage.setItem('scopecam_pcblive_v1', JSON.stringify({
       enabled: S.pcbLiveSnapEnabled, search: PCB_SNAP_SEARCH, grad: PCB_SNAP_MIN_GRAD

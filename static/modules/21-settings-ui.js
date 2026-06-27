@@ -2,6 +2,14 @@
 // EINSTELLUNGEN
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { applyDevice } from './05-video.js';
+import { applyDesign, populateDesignControls } from './20-design.js';
+import { setStatus, scopeLog } from './03-status-log.js';
+import { savePanelStates } from './02-panels.js';
+import { tabById } from './08-tabs.js';
+import { drawRulers } from './22-rulers.js';
+
 const settingsPage = document.getElementById('settingsPage');
 
 // Settings tab switching
@@ -21,7 +29,7 @@ const spBackdrop = document.getElementById('spBackdrop');
 const SP_POS_KEY = 'scopecam_sp_pos';
 let spPos = null;
 
-function loadSpPos() {
+export function loadSpPos() {
   try { spPos = JSON.parse(localStorage.getItem(SP_POS_KEY)); } catch (_) {}
 }
 
@@ -43,13 +51,13 @@ function positionSpWindow() {
   }
 }
 
-function openSettings() {
+export function openSettings() {
   settingsPage.classList.add('sp-open');
   spBackdrop.classList.add('sp-open');
   positionSpWindow();
 }
 
-function closeSettings() {
+export function closeSettings() {
   settingsPage.classList.remove('sp-open');
   spBackdrop.classList.remove('sp-open');
 }
@@ -91,7 +99,7 @@ document.getElementById('maxFps').addEventListener('input', function () {
   document.getElementById('maxFpsVal').textContent = this.value;
 });
 
-async function populateSettings() {
+export async function populateSettings() {
   const { devices } = await fetch('/api/devices').then(r => r.json());
   const sel = document.getElementById('deviceSelect');
   sel.innerHTML = '';
@@ -149,7 +157,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
   drawRulers();
 });
 
-function updateScaleStatus() {
+export function updateScaleStatus() {
   document.getElementById('statusScale').textContent = S.settings.scale_px_per_mm
     ? `Skalierung: ${S.settings.scale_px_per_mm} px/mm` : '';
 }

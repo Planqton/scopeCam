@@ -2,9 +2,14 @@
 // KI-EINSTELLUNGEN
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { openSettings, closeSettings } from './21-settings-ui.js';
+import { setStatus } from './03-status-log.js';
+import { updateKiPanel } from './30-ki-chat-ui.js';
+
 const KI_STORAGE_KEY = 'scopecam_ki_v1';
 
-const KI_PROVIDERS = {
+export const KI_PROVIDERS = {
   openai: {
     label:    'OpenAI',
     endpoint: 'https://api.openai.com/v1',
@@ -38,10 +43,10 @@ const KI_PROVIDERS = {
 
 S.kiSettings = { endpoint: '', apiKey: '', model: '', provider: '', template: '', thinking: false, thinkingBudget: 8000 };
 
-function loadKiSettings() {
+export function loadKiSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(KI_STORAGE_KEY));
-    if (s) S.kiSettings = { ...kiSettings, ...s };
+    if (s) S.kiSettings = { ...S.kiSettings, ...s };
   } catch (_) {}
 }
 
@@ -49,7 +54,7 @@ function saveKiSettings() {
   try { localStorage.setItem(KI_STORAGE_KEY, JSON.stringify(S.kiSettings)); } catch (_) {}
 }
 
-function detectKiProvider(endpoint) {
+export function detectKiProvider(endpoint) {
   if (!endpoint) return null;
   if (endpoint.includes('openai.com'))               return 'openai';
   if (endpoint.includes('anthropic.com'))            return 'anthropic';
@@ -57,7 +62,7 @@ function detectKiProvider(endpoint) {
   return 'custom';
 }
 
-function populateKiSettings() {
+export function populateKiSettings() {
   document.getElementById('kiEndpoint').value     = S.kiSettings.endpoint || '';
   document.getElementById('kiApiKey').value       = S.kiSettings.apiKey   || '';
   document.getElementById('kiTemplate').value     = S.kiSettings.template || '';
@@ -123,7 +128,7 @@ async function loadKiModels() {
   }
 }
 
-function _updateThinkingVisibility(providerName) {
+export function _updateThinkingVisibility(providerName) {
   const show = providerName === 'anthropic' || providerName === 'google';
   const sec  = document.getElementById('kiThinkingSection');
   if (sec) sec.style.display = show ? '' : 'none';

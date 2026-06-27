@@ -2,6 +2,29 @@
 // KONSOLE PANEL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { TOOL_NAMES, activateTool, getColor, getWidth } from './09-tools.js';
+import { CUSTOM_PROPS, saveHistory, restoreHistory, refreshTimeline } from './14-history.js';
+import { DESIGN_PRESETS, applyDesign } from './20-design.js';
+import { ZOOM_MIN, ZOOM_MAX, applyTransform, setZoom, resetView } from './06-transform.js';
+import { saveProject, saveProjectAs, _isDirty } from './16-file-ops.js';
+import { openFileManager } from './19-file-manager.js';
+import { setStatus, scopeLog } from './03-status-log.js';
+import { refreshLayersList, getObjLabel, createLayer, deleteLayer, showCtxMenu } from './13-layers.js';
+import { updatePropsPanel } from './12-props-panel.js';
+import { savePanelStates, loadPanelStates } from './02-panels.js';
+import { drawGrid, saveGridState, applyGridState } from './23-grid.js';
+import { applyDevice } from './05-video.js';
+import { zoomToSelection } from './29-feature-batch2.js';
+import { executeAIActions } from './27-ki-core.js';
+import { sendKiMessage } from './30-ki-chat-ui.js';
+import { copySelected, pasteClipboard, duplicateSelected, exportSVG, _addClonedToCanvas } from './28-tools-extra.js';
+import { addArrow, addDimension } from './11-draw-helpers.js';
+import { getImgOffset } from './22-rulers.js';
+import { tabById, createTab, switchToTab } from './08-tabs.js';
+import { linkSelectedObjects, unlinkObjects } from './12-props-panel.js';
+import { drawGuides, saveGuides } from './24-guides.js';
+
 (function initConsole() {
 
 const _CON_OUT  = document.getElementById('consoleOutput');
@@ -485,7 +508,7 @@ cmd('deleteLayer', 'deleteLayer <name>', 'Ebene löschen', args => {
 cmd('undo', 'undo [n]', 'Rückgängig (n-mal)', args => {
   const n = parseInt(args[0]) || 1;
   for (let i = 0; i < n; i++) {
-    const tab = getCurrentTab?.();
+    const tab = S.tabs.find(t => t.id === S.activeTabId);
     if (!tab || tab.historyIdx <= 0) break;
     restoreHistory(tab.historyIdx - 1);
   }
@@ -493,13 +516,13 @@ cmd('undo', 'undo [n]', 'Rückgängig (n-mal)', args => {
 });
 
 cmd('redo', 'redo', 'Wiederholen', () => {
-  const tab = getCurrentTab?.();
+  const tab = S.tabs.find(t => t.id === S.activeTabId);
   if (tab && tab.historyIdx < tab.history.length - 1) restoreHistory(tab.historyIdx + 1);
   _cOk('Wiederholen');
 });
 
 cmd('history', 'history', 'History anzeigen', () => {
-  const tab = getCurrentTab?.();
+  const tab = S.tabs.find(t => t.id === S.activeTabId);
   if (!tab) return;
   const rows = tab.history.map((h, i) => ({ '#': i, Aktuell: i === tab.historyIdx ? '▶' : '', Label: h.label || '—', Zeit: h.time || '' }));
   _cTable(rows.slice(-20));
@@ -507,7 +530,7 @@ cmd('history', 'history', 'History anzeigen', () => {
 });
 
 cmd('clearHistory', 'clearHistory', 'History leeren', () => {
-  const tab = getCurrentTab?.();
+  const tab = S.tabs.find(t => t.id === S.activeTabId);
   if (!tab) return;
   tab.history = []; tab.historyIdx = -1;
   S._nextLabel = 'History geleert'; saveHistory();
@@ -723,7 +746,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'F12') {
     e.preventDefault();
     S.panelStates['console'].open = !S.panelStates['console'].open;
-    applyPanel('console');
+    S.applyPanel('console');
     savePanelStates();
     if (S.panelStates['console'].open) setTimeout(() => _CON_IN.focus(), 80);
   }

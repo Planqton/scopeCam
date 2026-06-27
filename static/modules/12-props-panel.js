@@ -1,12 +1,18 @@
+import { S } from './00-state.js';
+import { saveHistory, CUSTOM_PROPS } from './14-history.js';
+import { refreshLayersList } from './13-layers.js';
+import { setStatus } from './03-status-log.js';
+import { getDimAutoLabel, applyDimLabel } from './11-draw-helpers.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // EIGENSCHAFTEN-PANEL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function showPropsSection(id, show) {
+export function showPropsSection(id, show) {
   document.getElementById(id).classList.toggle('props-hidden', !show);
 }
 
-function updatePropsPanel() {
+export function updatePropsPanel() {
   const objs = S.canvas.getActiveObjects();
   if (objs.length === 0) { clearPropsPanel(); return; }
 
@@ -59,7 +65,7 @@ function updatePropsPanel() {
   }
 }
 
-function clearPropsPanel() {
+export function clearPropsPanel() {
   showPropsSection('propsObj',   false);
   showPropsSection('propsText',  false);
   showPropsSection('propsDim',   false);
@@ -120,7 +126,7 @@ function _updateCoordUnitLabel() {
     if (el) el.textContent = label;
   });
 }
-function _refreshCoordFields(obj) {
+export function _refreshCoordFields(obj) {
   if (!obj) return;
   const l = obj.left ?? 0, t = obj.top ?? 0;
   const w = obj.getScaledWidth?.() ?? obj.width * (obj.scaleX ?? 1);
@@ -247,7 +253,7 @@ makeFormatToggle('propLinethrough', 'linethrough', true,     false);
 // ── Verknüpfungs-Logik ──────────────────────────────────────────────────────
 S._suppressLinkExpand = false;
 
-function getLinkGroupMembers(id) {
+export function getLinkGroupMembers(id) {
   return S.canvas.getObjects().filter(o => o.linkGroup === id);
 }
 
@@ -271,7 +277,7 @@ function expandToLinkGroup(e) {
   S._suppressLinkExpand = false;
 }
 
-function linkSelectedObjects() {
+export function linkSelectedObjects() {
   const objs = S.canvas.getActiveObjects().filter(o => !o.locked);
   if (objs.length < 2) return;
   const id = crypto.randomUUID();
@@ -281,7 +287,7 @@ function linkSelectedObjects() {
   refreshLayersList();
 }
 
-function unlinkObjects(objs) {
+export function unlinkObjects(objs) {
   objs.forEach(o => { o.linkGroup = null; });
   S._nextLabel = 'Verknüpfung aufgehoben';
   saveHistory();

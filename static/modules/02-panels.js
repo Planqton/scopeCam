@@ -1,3 +1,7 @@
+import { S } from './00-state.js';
+import { _tabHasUnsavedChanges } from './08-tabs.js';
+import { _isDirty } from './16-file-ops.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PANEL MANAGER
 // Verwaltet schwebende und angedockte Panels (Werkzeuge, Eigenschaften, etc.)
@@ -25,7 +29,7 @@ document.querySelectorAll('.panel[data-panel]').forEach(el => {
   S.panelElCache[el.dataset.panel] = el;
 });
 
-function loadPanelStates() {
+export function loadPanelStates() {
   try {
     const saved = JSON.parse(localStorage.getItem(PANEL_KEY)) || {};
     S.panelStates = {};
@@ -40,7 +44,7 @@ function loadPanelStates() {
   }
 }
 
-function savePanelStates() {
+export function savePanelStates() {
   try { localStorage.setItem(PANEL_KEY, JSON.stringify(S.panelStates)); } catch (_) {}
 }
 
@@ -98,7 +102,7 @@ function _refreshBottomTabs() {
   });
 }
 
-function applyPanel(id) {
+S.applyPanel = function(id) {
   const el = getPanelEl(id);
   const st = S.panelStates[id];
   if (!el || !st) return;
@@ -143,7 +147,7 @@ function applyPanel(id) {
 
   updateAllDocks();
   updatePanelToggles();
-}
+};
 
 function updatePanelToggles() {
   document.querySelectorAll('.panel-toggle[data-panel]').forEach(item => {
@@ -197,7 +201,7 @@ function onPanelDragMove(e) {
     st.mode = 'float';
     st.x    = drag.origX;
     st.y    = drag.origY;
-    applyPanel(drag.id);
+    S.applyPanel(drag.id);
     el.style.zIndex = ++zTop;
     el.classList.add('dragging');
   }
@@ -252,7 +256,7 @@ function onPanelDragEnd(e) {
     st.y = parseFloat(el.style.top);
   }
 
-  applyPanel(drag.id);
+  S.applyPanel(drag.id);
   ['dockLeft','dockRight','dockBottom'].forEach(id =>
     document.getElementById(id).classList.remove('drop-active'));
   savePanelStates();
@@ -267,7 +271,7 @@ document.querySelectorAll('.panel-toggle[data-panel]').forEach(item => {
     const st = S.panelStates[id];
     st.open = !st.open;
     if (st.open && st.mode === 'float' && !st.x) { st.x = 120; st.y = 80; }
-    applyPanel(id);
+    S.applyPanel(id);
     savePanelStates();
   });
 });
@@ -277,12 +281,12 @@ document.querySelectorAll('.panel').forEach(el => {
   const id = el.dataset.panel;
   el.querySelector('.p-close').addEventListener('click', () => {
     S.panelStates[id].open = false;
-    applyPanel(id);
+    S.applyPanel(id);
     savePanelStates();
   });
   el.querySelector('.p-collapse').addEventListener('click', () => {
     S.panelStates[id].collapsed = !S.panelStates[id].collapsed;
-    applyPanel(id);
+    S.applyPanel(id);
     savePanelStates();
   });
   el.querySelector('.panel-header').addEventListener('mousedown', e => panelStartDrag(id, e));
@@ -415,7 +419,7 @@ applyDockWidths();
 setupDockResizeHandles();
 loadPanelStates();
 const _wantedBottomTab = _activeBottomTab; // vor applyPanel sichern — _refreshBottomTabs überschreibt es
-Object.keys(S.panelStates).forEach(applyPanel);
+Object.keys(S.panelStates).forEach(id => S.applyPanel(id));
 // Nach allen Panels: gewünschten Tab wiederherstellen (erst jetzt sind alle Panels im Dock)
 if (_wantedBottomTab) { _activeBottomTab = _wantedBottomTab; _refreshBottomTabs(); }
 

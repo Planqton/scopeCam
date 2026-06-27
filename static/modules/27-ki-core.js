@@ -2,11 +2,21 @@
 // KI CHAT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { addArrow, addDimension, getDimAutoLabel } from './11-draw-helpers.js';
+import { unlinkObjects, getLinkGroupMembers } from './12-props-panel.js';
+import { createLayer, moveObjectToLayer, refreshLayersList, getObjLabel } from './13-layers.js';
+import { saveHistory } from './14-history.js';
+import { detectKiProvider, KI_PROVIDERS } from './26-ki-settings.js';
+import { scopeLog, setStatus } from './03-status-log.js';
+import { kiAppendMessage, getKiRegionInCanvasCoords } from './30-ki-chat-ui.js';
+import { drawGuides, saveGuides } from './24-guides.js';
+
 S.kiChatHistory = []; // {role:'user'|'assistant', content:''}
 
 const KI_CHAT_KEY = 'scopecam_ki_chat_v1';
 
-function saveKiChat() {
+export function saveKiChat() {
   try { localStorage.setItem(KI_CHAT_KEY, JSON.stringify(S.kiChatHistory)); } catch (_) {}
 }
 
@@ -15,7 +25,7 @@ const KI_PERMS_KEY = 'scopecam_ki_perms_v1';
 const KI_PERM_DEFAULTS = { create: true, delete: true, move: true, setProps: true, rename: true, link: true, layers: true, select: true, guides: true };
 S.kiPerms = { ...KI_PERM_DEFAULTS };
 
-function loadKiPerms() {
+export function loadKiPerms() {
   try {
     const s = JSON.parse(localStorage.getItem(KI_PERMS_KEY));
     if (s) S.kiPerms = { ...KI_PERM_DEFAULTS, ...s };
@@ -36,7 +46,7 @@ function kiPermAllowed(action) {
   return !!S.kiPerms[action];
 }
 
-function loadKiChat() {
+export function loadKiChat() {
   try {
     const saved = JSON.parse(localStorage.getItem(KI_CHAT_KEY));
     if (Array.isArray(saved)) {
@@ -74,7 +84,7 @@ function getCanvasStateForAI() {
   };
 }
 
-function buildKiSystemPrompt() {
+export function buildKiSystemPrompt() {
   const base = S.kiSettings.template ||
     'Du bist ein KI-Assistent für PCB-Annotation. Antworte präzise auf Deutsch.';
   const state  = JSON.stringify(getCanvasStateForAI(), null, 2);
@@ -174,7 +184,7 @@ Beispiel für eine L-förmige Leiterbahn:
 
 }
 
-async function callKiLLM(messages) {
+export async function callKiLLM(messages) {
   const { endpoint, apiKey } = S.kiSettings;
   // Strip "models/" prefix that Google's model list adds
   const model = S.kiSettings.model.replace(/^models\//, '');
@@ -262,16 +272,16 @@ async function callKiLLM(messages) {
   return { text: data.choices?.[0]?.message?.content || '', thinking: null };
 }
 
-function parseKiResponse(text) {
+export function parseKiResponse(text) {
   const match = text.match(/```json\s*([\s\S]*?)```/);
   if (!match) return { reply: text, actions: [] };
   try { return JSON.parse(match[1]); } catch { return { reply: text, actions: [] }; }
 }
 
-async function executeAIActions(actions) {
+export async function executeAIActions(actions) {
   if (!Array.isArray(actions)) return;
   S._kiBatchMode = true;
-  const findObj = id => canvas.getObjects().find(o => o.objId === id);
+  const findObj = id => S.canvas.getObjects().find(o => o.objId === id);
   try {
 
   for (const act of actions) {
@@ -293,7 +303,7 @@ async function executeAIActions(actions) {
             obj = new fabric.Text(act.text || '', {
               left: act.x||0, top: act.y||0,
               fill: act.color || '#ffffff',
-              fontSize: act.fontSize || settings.defaultFontSize || 16,
+              fontSize: act.fontSize || S.settings.defaultFontSize || 16,
               fontFamily: 'Arial',
             });
           } else if (act.type === 'rect') {
@@ -311,7 +321,7 @@ async function executeAIActions(actions) {
             obj.objId = crypto.randomUUID();
             if (act.linkGroup) obj.linkGroup = act.linkGroup;
             if (act.name)      obj.customName = act.name;
-            if (!['arrow','dimension'].includes(act.type)) canvas.add(obj);
+            if (!['arrow','dimension'].includes(act.type)) S.canvas.add(obj);
           }
           break;
         }
@@ -322,7 +332,7 @@ async function executeAIActions(actions) {
         }
         case 'delete': {
           const o = findObj(act.id);
-          if (o) canvas.remove(o);
+          if (o) S.canvas.remove(o);
           break;
         }
         case 'setProps': {
@@ -371,14 +381,14 @@ async function executeAIActions(actions) {
         }
         case 'select': {
           const objs = (act.ids||[]).map(findObj).filter(Boolean);
-          if (objs.length === 1) canvas.setActiveObject(objs[0]);
-          else if (objs.length > 1) canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas: S.canvas }));
+          if (objs.length === 1) S.canvas.setActiveObject(objs[0]);
+          else if (objs.length > 1) S.canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas: S.canvas }));
           break;
         }
         case 'addGuide': {
           let gAxis = act.axis === 'x' ? 'v' : act.axis === 'y' ? 'h' : act.axis;
           if ((gAxis === 'h' || gAxis === 'v') && act.pos != null) {
-            guidesVisible = true;
+            S.guidesVisible = true;
             S.guideLines[gAxis].push(Math.round(act.pos));
             saveGuides();
             drawGuides();

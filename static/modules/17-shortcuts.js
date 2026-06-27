@@ -2,6 +2,9 @@
 // SHORTCUT-SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { setStatus } from './03-status-log.js';
+
 const SC_KEY = 'scopecam_shortcuts_v1';
 const SC_DEFAULTS = {
   tool_select:    { key: 's',      ctrl:false, alt:false, shift:false, label:'Auswahl-Werkzeug',       cat:'Werkzeuge' },
@@ -44,7 +47,7 @@ function _saveShortcuts() {
   try { localStorage.setItem(SC_KEY, JSON.stringify(S.SC)); } catch(_) {}
 }
 
-function matchSC(e, id) {
+export function matchSC(e, id) {
   const sc = S.SC[id]; if (!sc) return false;
   return e.key.toLowerCase() === sc.key.toLowerCase()
     && !!e.ctrlKey  === !!sc.ctrl
@@ -52,7 +55,7 @@ function matchSC(e, id) {
     && !!e.shiftKey === !!sc.shift;
 }
 
-function scLabel(id) {
+export function scLabel(id) {
   const sc = S.SC[id]; if (!sc) return '';
   const parts = [];
   if (sc.ctrl)  parts.push('Ctrl');
@@ -64,7 +67,7 @@ function scLabel(id) {
 
 // ── Shortcut-Manager UI ───────────────────────────────────────────────────────
 
-function renderScManager() {
+export function renderScManager() {
   const list = document.getElementById('scList');
   if (!list) return;
   list.innerHTML = '';
@@ -102,7 +105,7 @@ function renderScManager() {
         const onKey = ev => {
           ev.preventDefault(); ev.stopPropagation();
           if (ev.key === 'Escape') { cancel(); return; }
-          S.SC[id] = { ...SC[id], key: ev.key, ctrl: ev.ctrlKey, alt: ev.altKey, shift: ev.shiftKey };
+          S.SC[id] = { ...S.SC[id], key: ev.key, ctrl: ev.ctrlKey, alt: ev.altKey, shift: ev.shiftKey };
           _saveShortcuts();
           inp.textContent = scLabel(id);
           inp.classList.remove('sc-recording');
@@ -178,7 +181,7 @@ function _scState(sc) {
   return _heldRegKey === k ? 'exact' : 'partial';
 }
 
-function _renderStatusKeys() {
+export function _renderStatusKeys() {
   const el = document.getElementById('statusKeys');
   if (!el) return;
   const anyHeld = _heldMods.ctrl || _heldMods.alt || _heldMods.shift || _heldRegKey;

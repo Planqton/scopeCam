@@ -1,3 +1,14 @@
+import { S } from './00-state.js';
+import { getColor, getWidth, getFontSize, getFontFamily } from './09-tools.js';
+import { saveHistory, CUSTOM_PROPS } from './14-history.js';
+import { refreshLayersList } from './13-layers.js';
+import { setStatus } from './03-status-log.js';
+import { addArrow, addDimension } from './11-draw-helpers.js';
+import { updatePropsPanel } from './12-props-panel.js';
+import { _snapAngle, _measureShow, _calloutClean } from './29-feature-batch2.js';
+import { _polyFinish, _polyCleanPreview } from './28-tools-extra.js';
+import { drawGuides } from './24-guides.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAUS-EVENTS (Zeichnen)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -29,7 +40,7 @@ function syncTextPreview(x, y) {
   S.canvas.renderAll();
 }
 
-function clearTextPreview() {
+export function clearTextPreview() {
   if (textPreview) { S.canvas.remove(textPreview); textPreview = null; S.canvas.renderAll(); }
 }
 

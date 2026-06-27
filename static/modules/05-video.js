@@ -1,3 +1,7 @@
+import { S } from './00-state.js';
+import { syncCanvasSize } from './07-canvas-layout.js';
+import { setStatus } from './03-status-log.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VIDEO / WEBSOCKET
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -55,12 +59,12 @@ function connectWS() {
   ws.onerror = () => ws.close();
 }
 
-function stopCameraStream() {
+export function stopCameraStream() {
   clearTimeout(noSignalTimer);
   if (ws) { ws.onclose = null; ws.close(); ws = null; }
 }
 
-function applyDevice() {
+export function applyDevice() {
   const demoBanner = document.getElementById('demoBanner');
   if (isDemo()) {
     stopCameraStream();

@@ -2,6 +2,11 @@
 // DATEI-MANAGER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { loadProject, _pngReadITXt, _u8ToB64, _setSavePath, _markSaved } from './16-file-ops.js';
+import { setStatus } from './03-status-log.js';
+import { showCtxMenu } from './13-layers.js';
+
 const _fm = { mode: 'save', path: '', selected: null, bytes: null, resolve: null };
 
 function _fmFmtSize(b) {
@@ -251,7 +256,7 @@ function _fmClose() {
   _fm.bytes = null;
 }
 
-function openFileManager(mode, bytes, defaultName, onFolderSelect) {
+export function openFileManager(mode, bytes, defaultName, onFolderSelect) {
   _fm.mode = mode;
   _fm.bytes = bytes || null;
   _fm.selected = null;

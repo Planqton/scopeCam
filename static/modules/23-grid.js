@@ -2,26 +2,33 @@
 // RASTER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function _arrowStep() {
+import { S } from './00-state.js';
+import { getImgOffset } from './22-rulers.js';
+import { setStatus } from './03-status-log.js';
+import { _renderStatusKeys } from './17-shortcuts.js';
+import { _refreshCoordFields } from './12-props-panel.js';
+import { _savePcbLiveSettings } from './25-pcb-snap.js';
+
+export function _arrowStep() {
   return parseFloat(localStorage.getItem('scopecam_arrow_step') || '1') || 1;
 }
 
 const GRID_KEY = 'scopecam_grid_v1';
 S.gridState = { enabled: false, snap: false, size: 20, color: '#444444', opacity: 25, originX: 0, originY: 0 };
 
-function loadGridState() {
+export function loadGridState() {
   try {
     const s = JSON.parse(localStorage.getItem(GRID_KEY));
-    if (s) S.gridState = { ...gridState, ...s };
+    if (s) S.gridState = { ...S.gridState, ...s };
   } catch (_) {}
   applyGridState();
 }
 
-function saveGridState() {
+export function saveGridState() {
   try { localStorage.setItem(GRID_KEY, JSON.stringify(S.gridState)); } catch (_) {}
 }
 
-function applyGridState() {
+export function applyGridState() {
   document.getElementById('gridCheckmark').textContent     = S.gridState.enabled ? '✓' : '';
   document.getElementById('gridSnapCheckmark').textContent = S.gridState.snap     ? '✓' : '';
   document.getElementById('gridSizeInput').value    = S.gridState.size;
@@ -34,7 +41,7 @@ function applyGridState() {
 }
 
 // Raster auf separatem Canvas der den ganzen Wrapper abdeckt
-function drawGrid() {
+export function drawGrid() {
   const gc = document.getElementById('gridCanvas');
   const wrapper = document.getElementById('canvasWrapper');
   const dpr = window.devicePixelRatio || 1;
@@ -95,7 +102,7 @@ S.canvas.on('after:render', drawGrid);
 // ── Skalierungsmodus ─────────────────────────────────────────────────────────
 S._aspectLocked = false; // Proportionen immer sperren (Schloss-Button)
 
-function _applyAspectLock() {
+export function _applyAspectLock() {
   S.canvas.uniformScaling = S._aspectLocked;
   const icon = S._aspectLocked ? '🔒' : '🔓';
   const propsBtn = document.getElementById('aspectLockBtn');

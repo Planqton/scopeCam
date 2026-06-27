@@ -1,8 +1,13 @@
+import { S } from './00-state.js';
+import { getImgOffset } from './22-rulers.js';
+import { setObjectVisible } from './13-layers.js';
+import { getLinkGroupMembers, linkSelectedObjects, unlinkObjects } from './12-props-panel.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CANVAS-LAYOUT & LINEALE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function syncCanvasSize() {
+export function syncCanvasSize() {
   const w = S.videoCanvas.offsetWidth, h = S.videoCanvas.offsetHeight;
   if (w > 0 && h > 0) {
     if (S.canvas.width !== w || S.canvas.height !== h) {

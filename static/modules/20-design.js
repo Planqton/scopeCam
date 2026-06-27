@@ -3,6 +3,10 @@
 // CSS-Variablen für Farben und Leistenhöhen. Presets, Export/Import, live Apply.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { drawRulers } from './22-rulers.js';
+import { setStatus } from './03-status-log.js';
+
 const DESIGN_STORAGE_KEY = 'scopecam_design_v1';
 
 const DESIGN_COLOR_VARS = [
@@ -29,7 +33,7 @@ const DESIGN_SIZE_VARS = [
   { id: 'ui-font',  label: 'UI-Schrift (px)',    min: 9,  max: 18 },
 ];
 
-const DESIGN_PRESETS = {
+export const DESIGN_PRESETS = {
   // Dark themes
   dark: {
     name: 'Dark',
@@ -96,7 +100,7 @@ const DESIGN_PRESETS = {
 
 let currentDesign = { ...DESIGN_PRESETS.dark };
 
-function applyDesign(design) {
+export function applyDesign(design) {
   currentDesign = { ...design };
   const isDark = parseInt((design['clr-bg'] || '#000').slice(1, 3), 16) < 128;
 
@@ -123,7 +127,7 @@ function saveDesign() {
   try { localStorage.setItem(DESIGN_STORAGE_KEY, JSON.stringify(currentDesign)); } catch (_) {}
 }
 
-function loadDesign() {
+export function loadDesign() {
   try {
     const saved = JSON.parse(localStorage.getItem(DESIGN_STORAGE_KEY));
     if (saved) { applyDesign(saved); return; }
@@ -153,7 +157,7 @@ function importDesign(file) {
   reader.readAsText(file);
 }
 
-function buildDesignControls() {
+export function buildDesignControls() {
   // Preset-Karten mit Farbvorschau
   const presetRow = document.getElementById('designPresets');
   presetRow.innerHTML = '';
@@ -232,7 +236,7 @@ function buildDesignControls() {
   });
 }
 
-function populateDesignControls() {
+export function populateDesignControls() {
   [...DESIGN_COLOR_VARS, ...DESIGN_SIZE_VARS].forEach(v => {
     const el = document.getElementById('dv-' + v.id);
     if (!el) return;

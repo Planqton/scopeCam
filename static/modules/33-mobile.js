@@ -2,10 +2,20 @@
 // MOBILE UI
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { S } from './00-state.js';
+import { saveProject, saveProjectAs, _isDirty } from './16-file-ops.js';
+import { openFileManager } from './19-file-manager.js';
+import { activateTool } from './09-tools.js';
+import { restoreHistory, saveHistory } from './14-history.js';
+import { savePanelStates } from './02-panels.js';
+import { init } from './32-init.js';
+import { setStatus } from './03-status-log.js';
+import { applyTransform } from './06-transform.js';
+
 function _isMobile() { return window.innerWidth <= 768; }
 
 // ── Werkzeug-Buttons sync ──────────────────────────────────────────────────
-function _updateMobTools(tool) {
+export function _updateMobTools(tool) {
   document.querySelectorAll('.mob-tool').forEach(btn => {
     btn.classList.toggle('mob-active', btn.dataset.tool === tool);
   });
@@ -39,7 +49,7 @@ document.getElementById('mobSaveBtn').addEventListener('click', () => saveProjec
 document.getElementById('mobKiBtn').addEventListener('click', () => {
   const st = S.panelStates['ki'];
   st.open = !st.open;
-  applyPanel('ki');
+  S.applyPanel('ki');
   savePanelStates();
 });
 
@@ -52,15 +62,15 @@ _mobBtn('mob_undo',        () => { if (S.historyIdx > 0) restoreHistory(S.histor
 _mobBtn('mob_redo',        () => { if (S.historyIdx < S.history.length - 1) restoreHistory(S.historyIdx + 1); });
 _mobBtn('mob_delete',      () => { const o = S.canvas.getActiveObject(); if (o) { S.canvas.remove(o); saveHistory('Gelöscht'); }});
 _mobBtn('mob_clearAll',    () => { S.canvas.clear(); saveHistory('Alle gelöscht'); });
-_mobBtn('mob_ki',          () => { S.panelStates['ki'].open = !S.panelStates['ki'].open; applyPanel('ki'); savePanelStates(); });
-_mobBtn('mob_timeline',    () => { S.panelStates['timeline'].open = !S.panelStates['timeline'].open; applyPanel('timeline'); savePanelStates(); });
+_mobBtn('mob_ki',          () => { S.panelStates['ki'].open = !S.panelStates['ki'].open; S.applyPanel('ki'); savePanelStates(); });
+_mobBtn('mob_timeline',    () => { S.panelStates['timeline'].open = !S.panelStates['timeline'].open; S.applyPanel('timeline'); savePanelStates(); });
 _mobBtn('mob_settings',    () => document.getElementById('openSettingsPage').click());
 
 // ── Mobile Panel Overlays ──────────────────────────────────────────────────
 // applyPanel patchen: auf Mobile → Panel als Vollbild-Overlay
-const _applyPanelOrig = applyPanel;
-applyPanel = function(id) {
-  _applyPanelOrig(id);
+const _orig = S.applyPanel;
+S.applyPanel = function(id) {
+  _orig.call(this, id);
   if (!_isMobile()) return;
   const el = S.panelElCache[id];
   if (!el) return;
