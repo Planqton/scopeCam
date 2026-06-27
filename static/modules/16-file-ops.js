@@ -1,7 +1,7 @@
 import { S } from './00-state.js';
 import { saveHistory, CUSTOM_PROPS, restoreHistory, _isDirty, _markSaved, _updateDirtyIndicator } from './14-history.js';
 export { _isDirty, _markSaved, _updateDirtyIndicator } from './14-history.js';
-import { tabById, saveTabs, renderTabBar, loadCanvasFromJSON } from './08-tabs.js';
+import { tabById, saveTabs, renderTabBar, loadCanvasFromJSON, createTab, switchToTab } from './08-tabs.js';
 import { refreshLayersList, loadLayersFromTab } from './13-layers.js';
 import { setStatus, scopeLog } from './03-status-log.js';
 import { drawGuides } from './24-guides.js';
@@ -317,6 +317,16 @@ export function loadProject(buf, serverPath) {
   alert('Unbekanntes Format — nur .png (ScopeCam) oder altes .scopecam unterstützt');
 }
 
+export function newProject() {
+  if (_isDirty() && !confirm('Ungespeicherte Änderungen verwerfen und neues Zeichenbrett erstellen?')) return;
+  const newTab = createTab('Neu');
+  switchToTab(newTab.id);
+  S.canvas.clear();
+  saveHistory('Neu');
+  setStatus('Neues Zeichenbrett erstellt');
+}
+
+document.getElementById('newProjectBtn').addEventListener('click', newProject);
 document.getElementById('saveProjectBtn').addEventListener('click', saveProject);
 document.getElementById('saveProjectAsBtn').addEventListener('click', saveProjectAs);
 document.getElementById('loadProjectBtn').addEventListener('click', () => openFileManager('open'));

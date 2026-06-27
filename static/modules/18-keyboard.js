@@ -4,11 +4,11 @@
 
 import { S } from './00-state.js';
 import { activateTool } from './09-tools.js';
-import { saveProject, saveProjectAs } from './16-file-ops.js';
+import { saveProject, saveProjectAs, newProject } from './16-file-ops.js';
 import { openFileManager } from './19-file-manager.js';
 import { restoreHistory, saveHistory } from './14-history.js';
 import { updatePropsPanel } from './12-props-panel.js';
-import { copySelected, pasteClipboard, duplicateSelected, _polyFinish } from './28-tools-extra.js';
+import { copySelected, pasteClipboard, duplicateSelected, _polyFinish, _pasteImageFromClipboard } from './28-tools-extra.js';
 import { matchSC } from './17-shortcuts.js';
 import { _applyAspectLock, _arrowStep } from './23-grid.js';
 import { setStatus } from './03-status-log.js';
@@ -28,6 +28,7 @@ document.addEventListener('keydown', e => {
 
   if (matchSC(e, 'scale_prop')) { S._aspectLocked = !S._aspectLocked; _applyAspectLock(); setStatus(S._aspectLocked ? '🔒 Proportionen gesperrt' : '🔓 Proportionen frei'); return; }
 
+  if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === 'n') { e.preventDefault(); newProject(); return; }
   if (matchSC(e, 'save_as'))    { e.preventDefault(); saveProjectAs(); return; }
   if (matchSC(e, 'save'))       { e.preventDefault(); saveProject(); return; }
   if (matchSC(e, 'open_file'))  { e.preventDefault(); openFileManager('open'); return; }
@@ -65,7 +66,11 @@ document.addEventListener('keydown', e => {
 
   // Copy / Paste / Duplicate
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'c') { copySelected(); return; }
-  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'v') { pasteClipboard(); return; }
+  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'v') {
+    e.preventDefault();
+    _pasteImageFromClipboard().then(handled => { if (!handled) pasteClipboard(); });
+    return;
+  }
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'd') { e.preventDefault(); duplicateSelected(); return; }
 
   // Polyline: Enter zum Abschließen

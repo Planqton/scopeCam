@@ -59,6 +59,42 @@ export function pasteClipboard() {
   S._clipboard.clone(CUSTOM_PROPS).then(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'));
 }
 
+// Liest Bild aus System-Clipboard und fügt es als Fabric-Objekt ein.
+// Gibt true zurück wenn ein Bild gefunden und eingefügt wurde, sonst false.
+export async function _pasteImageFromClipboard() {
+  if (!navigator.clipboard?.read) return false;
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if (!imgType) continue;
+      const blob = await item.getType(imgType);
+      const url  = URL.createObjectURL(blob);
+      const img  = await fabric.Image.fromURL(url);
+      // Bild zentriert auf der Canvas einfügen, auf Canvas-Größe skalieren
+      const cw = S.canvas.width, ch = S.canvas.height;
+      const scale = Math.min(1, (cw * 0.8) / img.width, (ch * 0.8) / img.height);
+      img.set({
+        left:    (cw - img.width  * scale) / 2,
+        top:     (ch - img.height * scale) / 2,
+        scaleX:  scale,
+        scaleY:  scale,
+        objId:   crypto.randomUUID(),
+      });
+      S.canvas.add(img);
+      S.canvas.setActiveObject(img);
+      S.canvas.renderAll();
+      S._nextLabel = 'Bild eingefügt';
+      saveHistory();
+      refreshLayersList();
+      setStatus('Bild aus Zwischenablage eingefügt');
+      URL.revokeObjectURL(url);
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
 export function duplicateSelected() {
   if (!S.canvas.getActiveObjects().length) return;
   // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
