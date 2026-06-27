@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScopeCam — Dokumentation</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #161616;
+    --panel: #1e1e1e;
+    --border: #2e2e2e;
+    --accent: #1bc9e9;
+    --accent2: #2f80ed;
+    --text: #e0e0e0;
+    --muted: #888;
+    --ok: #4cdd8c;
+    --warn: #f5c400;
+    --err: #ff5555;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px 16px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+  }
+  header svg { flex-shrink: 0; }
+  .header-title h1 { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .header-title p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  header nav { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+  header nav a {
+    color: var(--muted); text-decoration: none; font-size: 12px;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid transparent;
+    transition: all .15s;
+  }
+  header nav a:hover { color: var(--text); border-color: var(--border); }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent);
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  /* ── CARDS (Accordion) ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .card:hover { border-color: #3a3a3a; }
+  .card.open  { border-color: var(--accent2); }
+
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; cursor: pointer;
+    user-select: none;
+  }
+  .card-header:hover { background: rgba(255,255,255,.03); }
+
+  .card-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-name { font-weight: 600; font-size: 14px; }
+  .card-short { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .card-sc {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 7px; color: var(--accent);
+    flex-shrink: 0;
+  }
+  .card-arrow {
+    width: 20px; text-align: center; color: var(--muted);
+    transition: transform .2s; flex-shrink: 0;
+  }
+  .card.open .card-arrow { transform: rotate(90deg); }
+
+  .card-body {
+    display: none; padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .card.open .card-body { display: block; }
+
+  /* ── BODY CONTENT ── */
+  .card-body p { color: var(--text); margin-top: 12px; font-size: 13px; }
+  .card-body p + p { margin-top: 6px; }
+
+  .steps { margin-top: 12px; padding-left: 0; list-style: none; }
+  .steps li {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 5px 0; font-size: 13px;
+  }
+  .steps li::before {
+    content: attr(data-n);
+    min-width: 20px; height: 20px;
+    background: var(--accent2); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  .tip {
+    background: rgba(27,201,233,.08);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px; margin-top: 12px; font-size: 12px;
+    color: #aad4e0;
+  }
+  .tip strong { color: var(--accent); }
+
+  .warn-box {
+    background: rgba(245,196,0,.07);
+    border-left: 3px solid var(--warn);
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px; margin-top: 12px; font-size: 12px;
+    color: #c9b050;
+  }
+
+  kbd {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 3px;
+    padding: 1px 5px; color: var(--text);
+  }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    background: var(--panel); border-radius: 3px;
+    padding: 1px 5px; color: var(--ok);
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .grid2 .mini-card {
+    background: var(--panel); border-radius: 4px;
+    padding: 8px 10px; font-size: 12px;
+  }
+  .grid2 .mini-card .mk { color: var(--muted); font-size: 11px; }
+  .grid2 .mini-card .mv { color: var(--text); font-weight: 600; margin-top: 2px; }
+
+  /* ── CONSOLE TABLE ── */
+  .cmd-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  .cmd-table th { color: var(--muted); text-align: left; padding: 4px 8px; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .cmd-table td { padding: 5px 8px; border-bottom: 1px solid #1a1a1a; }
+  .cmd-table tr:last-child td { border-bottom: none; }
+  .cmd-table td:first-child { color: var(--ok); font-family: monospace; }
+  .cmd-table td:nth-child(2) { color: var(--accent); font-family: monospace; font-size: 11px; }
+
+  /* ── SHORTCUT TABLE ── */
+  .sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 6px; margin-top: 12px; }
+  .sc-item { background: var(--panel); border-radius: 4px; padding: 7px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sc-item .label { font-size: 12px; color: var(--muted); }
+  .sc-item kbd { font-size: 11px; }
+
+  /* ── HERO BADGES ── */
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .badge {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+  .badge.yellow .dot { background: var(--warn); }
+  .badge.blue   .dot { background: var(--accent2); }
+
+  /* ── FORMAT-FILE ── */
+  .format-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; font-size: 12px; }
+  .format-tag { background: var(--accent2); color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+  footer a { color: var(--accent2); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .page { padding: 20px 14px 60px; }
+    .grid2 { grid-template-columns: 1fr; }
+    header { padding: 14px 16px; }
+    header nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="36" height="36" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="6" fill="#111"/>
+    <rect x="13" y="3" width="6" height="12" rx="2" fill="#1bc9e9"/>
+    <rect x="11" y="2" width="10" height="3" rx="1.5" fill="#0fa8c4"/>
+    <rect x="10" y="14" width="12" height="3" rx="1" fill="#0fa8c4"/>
+    <rect x="14" y="17" width="4" height="7" rx="1" fill="#1bc9e9"/>
+    <rect x="8" y="24" width="16" height="3" rx="1.5" fill="#0fa8c4"/>
+    <rect x="14" y="13" width="4" height="5" rx="1" fill="#07809e"/>
+    <circle cx="16" cy="20" r="2" fill="#1bc9e9" opacity=".5"/>
+  </svg>
+  <div class="header-title">
+    <h1>ScopeCam</h1>
+    <p>PCB-Annotationstool — Dokumentation</p>
+  </div>
+  <nav>
+    <a href="#tools">Werkzeuge</a>
+    <a href="#draw">Zeichnen</a>
+    <a href="#edit">Bearbeiten</a>
+    <a href="#view">Ansicht</a>
+    <a href="#snap">Einrasten</a>
+    <a href="#file">Datei</a>
+    <a href="#ki">KI</a>
+    <a href="#console">Konsole</a>
+    <a href="#shortcuts">Shortcuts</a>
+  </nav>
+</header>
+
+<div class="page">
+
+  <!-- OVERVIEW -->
+  <div class="section" style="margin-top:8px">
+    <div class="badge-row">
+      <div class="badge"><span class="dot"></span>Fabric.js 5.3</div>
+      <div class="badge blue"><span class="dot"></span>WebSocket Live-Stream</div>
+      <div class="badge yellow"><span class="dot"></span>KI-Integration (OpenAI / Anthropic / Google)</div>
+      <div class="badge"><span class="dot"></span>Server-File-Manager</div>
+      <div class="badge"><span class="dot"></span>.scopecam PNG-Format</div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:14px">ScopeCam streamt den Kameraeingang auf eine Zeichenfläche. Darauf können Linien, Pfeile, Bemaßungen, Texte, Rechtecke und mehr eingezeichnet werden. Projekte werden als <code>.scopecam</code>-Dateien gespeichert (gültiges PNG mit eingebetteten Metadaten).</p>
+  </div>
+
+  <!-- ═══ WERKZEUGE ═══ -->
+  <div class="section" id="tools">
+    <div class="section-title">Werkzeuge</div>
+
+    <!-- Auswahl -->
+    <div class="card open">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⬡</div>
+        <div class="card-meta">
+          <div class="card-name">Auswahl</div>
+          <div class="card-short">Objekte auswählen, verschieben, skalieren, drehen</div>
+        </div>
+        <div class="card-sc">S</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Das Standard-Werkzeug. Klicke ein Objekt an um es auszuwählen. Ziehe eine Rubber-Band-Box um mehrere Objekte gleichzeitig zu erfassen.</p>
+        <ul class="steps">
+          <li data-n="1">Klick auf Objekt → auswählen</li>
+          <li data-n="2">Klick+Drag im Leeren → Mehrfachauswahl per Rahmen</li>
+          <li data-n="3">Handles an den Ecken → Skalieren (Shift = gleichmäßig)</li>
+          <li data-n="4">Runder Handle oben → Drehen</li>
+          <li data-n="5"><kbd>Entf</kbd> → ausgewähltes Objekt löschen</li>
+        </ul>
+        <div class="tip"><strong>Tipp:</strong> <kbd>Alt+X</kbd> / <kbd>Alt+Y</kbd> sperrt die Bewegung auf eine Achse. <kbd>Ctrl</kbd> während dem Verschieben deaktiviert das Einrasten.</div>
+      </div>
+    </div>
+
+    <!-- Hand -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">✋</div>
+        <div class="card-meta">
+          <div class="card-name">Hand / Pan</div>
+          <div class="card-short">Ansicht verschieben ohne Objekte zu bewegen</div>
+        </div>
+        <div class="card-sc">H</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Klicken und ziehen bewegt die gesamte Ansicht (Pan). Das Werkzeug deaktiviert das Auswählen von Objekten.</p>
+        <ul class="steps">
+          <li data-n="1">Werkzeug aktivieren mit <kbd>H</kbd> oder Klick auf Hand-Button</li>
+          <li data-n="2">Klicken und ziehen → Ansicht schieben</li>
+          <li data-n="3">Mausrad → Zoomen</li>
+        </ul>
+        <div class="tip"><strong>Tipp:</strong> <kbd>Leertaste</kbd> gedrückt halten aktiviert die Hand temporär — loslassen kehrt zum vorherigen Werkzeug zurück.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ZEICHENWERKZEUGE ═══ -->
+  <div class="section" id="draw">
+    <div class="section-title">Zeichenwerkzeuge</div>
+
+    <!-- Linie -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">╱</div>
+        <div class="card-meta">
+          <div class="card-name">Linie</div>
+          <div class="card-short">Einfache gerade Linie</div>
+        </div>
+        <div class="card-sc">L</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Werkzeug mit <kbd>L</kbd> aktivieren</li>
+          <li data-n="2">Klicken und ziehen → Linie aufspannen</li>
+          <li data-n="3">Loslassen → Linie fertig</li>
+        </ul>
+        <div class="tip"><strong>Winkeleinrasten:</strong> <kbd>Shift</kbd> gedrückt halten → Linie rastet auf 0°, 45°, 90°, 135° ein.</div>
+      </div>
+    </div>
+
+    <!-- Pfeil -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">→</div>
+        <div class="card-meta">
+          <div class="card-name">Pfeil</div>
+          <div class="card-short">Linie mit Pfeilspitze am Ende</div>
+        </div>
+        <div class="card-sc">A</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Genau wie Linie, aber das Ende wird mit einer Pfeilspitze versehen (Dreieck, gefüllt mit der Strichfarbe).</p>
+        <ul class="steps">
+          <li data-n="1"><kbd>A</kbd> drücken</li>
+          <li data-n="2">Startpunkt klicken und zur Zielposition ziehen</li>
+          <li data-n="3">Loslassen → Pfeil wird erstellt</li>
+        </ul>
+        <div class="tip"><strong>Tipp:</strong> Pfeil + Länge = Bemaßung? Benutze stattdessen das Bemaßungs-Werkzeug <kbd>D</kbd>.</div>
+      </div>
+    </div>
+
+    <!-- Bemaßung -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⟷</div>
+        <div class="card-meta">
+          <div class="card-name">Bemaßung</div>
+          <div class="card-short">Maßlinie mit automatischem Längen-Label</div>
+        </div>
+        <div class="card-sc">D</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Erstellt eine Maßlinie mit Pfeilspitzen an beiden Enden und einem zentrierten Längen-Label (px oder mm wenn kalibriert).</p>
+        <ul class="steps">
+          <li data-n="1"><kbd>D</kbd> drücken</li>
+          <li data-n="2">Startpunkt ziehen zur Endposition</li>
+          <li data-n="3">Label zeigt automatisch px-Länge bzw. mm nach Kalibrierung</li>
+        </ul>
+        <div class="tip"><strong>Label überschreiben:</strong> Objekt auswählen → im Eigenschaften-Panel ✓ "Maßung überschreiben" → eigenen Text eingeben.</div>
+        <div class="tip"><strong>Kalibrierung:</strong> Werkzeug-Leiste → Kalibrierung → Linie über bekannte Strecke ziehen → mm eingeben.</div>
+      </div>
+    </div>
+
+    <!-- Rechteck -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">▭</div>
+        <div class="card-meta">
+          <div class="card-name">Rechteck</div>
+          <div class="card-short">Gefülltes oder transparentes Rechteck</div>
+        </div>
+        <div class="card-sc">R</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1"><kbd>R</kbd> drücken</li>
+          <li data-n="2">Ecke klicken und zur gegenüberliegenden Ecke ziehen</li>
+          <li data-n="3">Loslassen → Rechteck erstellt</li>
+        </ul>
+        <div class="tip"><strong>Quadrat:</strong> <kbd>Shift</kbd> gedrückt halten → quadratisches Seitenverhältnis.</div>
+      </div>
+    </div>
+
+    <!-- Kreis -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">◯</div>
+        <div class="card-meta">
+          <div class="card-name">Kreis / Ellipse</div>
+          <div class="card-short">Kreis oder ovale Form</div>
+        </div>
+        <div class="card-sc">C</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1"><kbd>C</kbd> drücken</li>
+          <li data-n="2">Mittelpunkt klicken und ziehen</li>
+          <li data-n="3">Loslassen → Kreis erstellt</li>
+        </ul>
+        <div class="tip"><strong>Tipp:</strong> Farbe und Strichbreite im Eigenschaften-Panel oder der Werkzeugleiste einstellen.</div>
+      </div>
+    </div>
+
+    <!-- Text -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">T</div>
+        <div class="card-meta">
+          <div class="card-name">Text</div>
+          <div class="card-short">Editierbares Textfeld auf dem Canvas</div>
+        </div>
+        <div class="card-sc">T</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1"><kbd>T</kbd> drücken</li>
+          <li data-n="2">Klick auf die gewünschte Position</li>
+          <li data-n="3">Text tippen → Cursor erscheint, direkt editierbar</li>
+          <li data-n="4"><kbd>Esc</kbd> oder Klick außerhalb → Textbearbeitung beenden</li>
+        </ul>
+        <div class="tip"><strong>Nacherbeiten:</strong> Doppelklick auf bestehenden Text → Bearbeitungsmodus. Im Eigenschaften-Panel: Schriftart, Größe, B/I/U, Farbe.</div>
+      </div>
+    </div>
+
+    <!-- Freihand -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">✏</div>
+        <div class="card-meta">
+          <div class="card-name">Freihand</div>
+          <div class="card-short">Freihandzeichnen wie mit Stift</div>
+        </div>
+        <div class="card-sc">F</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1"><kbd>F</kbd> drücken</li>
+          <li data-n="2">Klicken und ziehen → Linie folgt der Mausbewegung</li>
+          <li data-n="3">Loslassen → Pfad wird als Objekt hinzugefügt</li>
+        </ul>
+        <div class="tip"><strong>Strichbreite</strong> und <strong>Farbe</strong> werden aus dem Eigenschaften-Panel übernommen.</div>
+      </div>
+    </div>
+
+    <!-- Polylinie -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⌇</div>
+        <div class="card-meta">
+          <div class="card-name">Polylinie</div>
+          <div class="card-short">Mehrere verbundene Liniensegmente</div>
+        </div>
+        <div class="card-sc">P</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Ideal für PCB-Leiterbahnen oder Umrisse mit mehreren geraden Segmenten. Alle Segmente erhalten automatisch dieselbe <code>linkGroup</code>.</p>
+        <ul class="steps">
+          <li data-n="1"><kbd>P</kbd> drücken</li>
+          <li data-n="2">Ersten Punkt klicken</li>
+          <li data-n="3">Weitere Punkte klicken — Vorschau-Linie folgt der Maus</li>
+          <li data-n="4">Doppelklick <em>oder</em> <kbd>Enter</kbd> → Polylinie abschließen</li>
+          <li data-n="5"><kbd>Esc</kbd> → Abbrechen ohne zu speichern</li>
+        </ul>
+        <div class="tip"><strong>Winkeleinrasten:</strong> <kbd>Shift</kbd> gedrückt → 45°-Raster aktiv.</div>
+      </div>
+    </div>
+
+    <!-- Callout -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">💬</div>
+        <div class="card-meta">
+          <div class="card-name">Callout</div>
+          <div class="card-short">Hinweislinie mit Textfeld (Beschriftung)</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Erstellt eine Linie vom Ankerpunkt zum Textfeld — gut für Bauteilbeschriftungen.</p>
+        <ul class="steps">
+          <li data-n="1">Callout-Werkzeug in der Werkzeugleiste aktivieren</li>
+          <li data-n="2">Erster Klick = Ankerpunkt (zeigt auf das Bauteil)</li>
+          <li data-n="3">Zweiter Klick = Textposition</li>
+          <li data-n="4">Text eingeben → <kbd>Esc</kbd> oder Klick außerhalb fertigstellen</li>
+        </ul>
+        <div class="tip">Linie und Text werden automatisch als <strong>Gruppe verknüpft</strong> (<code>linkGroup</code>).</div>
+      </div>
+    </div>
+
+    <!-- Schnellmessung -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">📏</div>
+        <div class="card-meta">
+          <div class="card-name">Schnellmessung</div>
+          <div class="card-short">Distanz zwischen zwei Punkten messen (ohne Objekt zu erstellen)</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Schnellmessung in der Werkzeugleiste aktivieren</li>
+          <li data-n="2">Ersten Punkt klicken</li>
+          <li data-n="3">Zweiten Punkt klicken → Distanz wird als Overlay neben dem Cursor angezeigt</li>
+          <li data-n="4">Ergebnis: px oder mm (wenn kalibriert)</li>
+        </ul>
+        <div class="tip">Kein Objekt wird erstellt — nur Anzeige. Für permanente Maße das <strong>Bemaßungs-Werkzeug</strong> verwenden.</div>
+      </div>
+    </div>
+
+    <!-- Kalibrierung -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⚖</div>
+        <div class="card-meta">
+          <div class="card-name">Kalibrierung</div>
+          <div class="card-short">px/mm-Verhältnis aus bekannter Strecke berechnen</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Kalibrierung-Werkzeug klicken</li>
+          <li data-n="2">Linie über eine bekannte Strecke auf dem Bild ziehen (z.B. 10 mm zwischen zwei Pads)</li>
+          <li data-n="3">Länge in mm eingeben → Bestätigen</li>
+          <li data-n="4">Ab jetzt zeigen alle Bemaßungen Werte in mm an</li>
+        </ul>
+        <div class="warn-box">Kalibrierung gilt nur für den aktuellen Zoom-Level des Kamerabildes. Bei Zoom-Änderung erneut kalibrieren.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BEARBEITEN ═══ -->
+  <div class="section" id="edit">
+    <div class="section-title">Bearbeiten</div>
+
+    <!-- Copy/Paste -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">📋</div>
+        <div class="card-meta">
+          <div class="card-name">Kopieren &amp; Einfügen</div>
+          <div class="card-short">Ctrl+C / Ctrl+V / Ctrl+D</div>
+        </div>
+        <div class="card-sc">Ctrl+C/V</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Kopieren</div><div class="mv"><kbd>Ctrl+C</kbd></div></div>
+          <div class="mini-card"><div class="mk">Einfügen</div><div class="mv"><kbd>Ctrl+V</kbd></div></div>
+          <div class="mini-card"><div class="mk">Duplizieren</div><div class="mv"><kbd>Ctrl+D</kbd></div></div>
+          <div class="mini-card"><div class="mk">Löschen</div><div class="mv"><kbd>Entf</kbd></div></div>
+        </div>
+        <div class="tip">Beim Duplizieren/Einfügen werden neue <code>objId</code> und <code>linkGroup</code>-UUIDs vergeben — kein versehentliches Alias.</div>
+      </div>
+    </div>
+
+    <!-- Undo/Redo -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">↩</div>
+        <div class="card-meta">
+          <div class="card-name">Undo / Redo — Timeline</div>
+          <div class="card-short">Pro Tab eigene History mit max. 100 Einträgen</div>
+        </div>
+        <div class="card-sc">Ctrl+Z/Y</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Jede Aktion wird mit Label und Uhrzeit geloggt. Die Timeline (Ansicht → Timeline) zeigt alle Einträge — Klick auf einen Eintrag springt direkt zu diesem Stand.</p>
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Rückgängig</div><div class="mv"><kbd>Ctrl+Z</kbd></div></div>
+          <div class="mini-card"><div class="mk">Wiederholen</div><div class="mv"><kbd>Ctrl+Y</kbd></div></div>
+        </div>
+        <div class="tip">History wird in der <code>.scopecam</code>-Datei mitgespeichert und beim Öffnen wiederhergestellt.</div>
+      </div>
+    </div>
+
+    <!-- Ausrichten -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⬛</div>
+        <div class="card-meta">
+          <div class="card-name">Ausrichten</div>
+          <div class="card-short">≥2 Objekte ausrichten oder gleichmäßig verteilen</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Mindestens 2 Objekte auswählen → im Eigenschaften-Panel erscheint die Ausrichten-Sektion mit 8 Buttons.</p>
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Links / Rechts / Oben / Unten</div><div class="mv">an Kante ausrichten</div></div>
+          <div class="mini-card"><div class="mk">Mitte H / Mitte V</div><div class="mv">Mittelpunkte angleichen</div></div>
+          <div class="mini-card"><div class="mk">Verteilen H</div><div class="mv">gleichmäßiger Abstand horizontal</div></div>
+          <div class="mini-card"><div class="mk">Verteilen V</div><div class="mv">gleichmäßiger Abstand vertikal</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verknüpfen -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⛓</div>
+        <div class="card-meta">
+          <div class="card-name">Verknüpfen / Gruppieren</div>
+          <div class="card-short">Objekte zu einer logischen Gruppe verbinden</div>
+        </div>
+        <div class="card-sc">Ctrl+G</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Verknüpfte Objekte teilen eine <code>linkGroup</code>-UUID. Sie bleiben einzeln selektierbar und editierbar, lassen sich aber gemeinsam verschieben wenn alle ausgewählt sind.</p>
+        <ul class="steps">
+          <li data-n="1">Mindestens 2 Objekte auswählen</li>
+          <li data-n="2"><kbd>Ctrl+G</kbd> → verknüpfen (gestrichelte blaue Verbindungslinien sichtbar)</li>
+          <li data-n="3"><kbd>Ctrl+Shift+G</kbd> → Verknüpfung aufheben</li>
+        </ul>
+        <div class="tip">KI erstellt Gruppen automatisch über das <code>linkGroup</code>-Feld. Rechtsklick auf ein Objekt → Kontextmenü → Verknüpfen.</div>
+      </div>
+    </div>
+
+    <!-- Batch Rename -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">✎</div>
+        <div class="card-meta">
+          <div class="card-name">Batch-Umbenennen</div>
+          <div class="card-short">Mehrere Objekte nach Muster umbenennen</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Mehrere Objekte auswählen</li>
+          <li data-n="2">Bearbeiten → Batch-Umbenennen (oder Button in Objekt-Manager)</li>
+          <li data-n="3">Muster eingeben und Vorschau prüfen</li>
+          <li data-n="4">OK → alle Objekte werden umbenannt</li>
+        </ul>
+        <p style="margin-top:10px">Verfügbare Platzhalter:</p>
+        <div class="grid2">
+          <div class="mini-card"><div class="mk"><code>%d</code></div><div class="mv">Laufende Nummer (1, 2, 3…)</div></div>
+          <div class="mini-card"><div class="mk"><code>%D</code></div><div class="mv">Buchstabe (A, B, C…)</div></div>
+          <div class="mini-card"><div class="mk"><code>%n</code></div><div class="mv">Alter Name des Objekts</div></div>
+        </div>
+        <div class="tip"><strong>Beispiel:</strong> Muster <code>C%d</code> → C1, C2, C3 …</div>
+      </div>
+    </div>
+
+    <!-- Komponenten-Bibliothek -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">📦</div>
+        <div class="card-meta">
+          <div class="card-name">Komponenten-Bibliothek</div>
+          <div class="card-short">Ausgewählte Objekte als Vorlage speichern und wiederverwenden</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Objekte auswählen (z.B. Rahmen + Label eines Bauteils)</li>
+          <li data-n="2">Bearbeiten → Komponentenbibliothek → Namen eingeben → Speichern</li>
+          <li data-n="3">Zum Einfügen: Bibliothek öffnen → Eintrag → Einfügen</li>
+        </ul>
+        <div class="tip">Beim Einfügen erhalten alle Objekte neue <code>objId</code> und <code>linkGroup</code>-UUIDs — kein Alias-Problem.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANSICHT ═══ -->
+  <div class="section" id="view">
+    <div class="section-title">Ansicht &amp; Navigation</div>
+
+    <!-- Zoom/Pan -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">🔍</div>
+        <div class="card-meta">
+          <div class="card-name">Zoom &amp; Pan</div>
+          <div class="card-short">Ansicht vergrößern und verschieben</div>
+        </div>
+        <div class="card-sc">Mausrad</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Zoomen</div><div class="mv">Mausrad scrollen</div></div>
+          <div class="mini-card"><div class="mk">Pan</div><div class="mv">Hand-Werkzeug + Drag</div></div>
+          <div class="mini-card"><div class="mk">Zoom Auswahl</div><div class="mv">Ansicht → Zoom auf Auswahl</div></div>
+          <div class="mini-card"><div class="mk">Reset</div><div class="mv">Zoom-Reset-Button oder <code>zoom reset</code> in Konsole</div></div>
+        </div>
+        <div class="tip">Mobile: Pinch-Zoom mit zwei Fingern auf dem Canvas-Bereich.</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⊞</div>
+        <div class="card-meta">
+          <div class="card-name">Tab-System</div>
+          <div class="card-short">Mehrere Canvas-Ansichten gleichzeitig verwalten</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Jeder Tab hat einen eigenen Canvas, eigene History, eigene Ebenen und einen eigenen Speicherpfad.</p>
+        <ul class="steps">
+          <li data-n="1">Tab-Leiste (oben): + Button → neuer Tab</li>
+          <li data-n="2">Klick auf Tab-Name → wechseln</li>
+          <li data-n="3">✕-Button → Tab schließen (ungespeicherte Änderungen → Dialog)</li>
+          <li data-n="4">Letzter Tab geschlossen → neuer Kamera-Tab wird automatisch erstellt</li>
+        </ul>
+        <div class="tip"><strong>Blauer Punkt</strong> im Tab-Header = ungespeicherte Änderungen. Browser-Schließen warnt ebenfalls.</div>
+      </div>
+    </div>
+
+    <!-- Stream Freeze -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⏸</div>
+        <div class="card-meta">
+          <div class="card-name">Stream einfrieren</div>
+          <div class="card-short">Bild anhalten ohne Aufnahme zu beenden</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Der Live-Stream wird eingefroren — das letzte Frame bleibt sichtbar. Zeichnen ist weiterhin möglich. Der WebSocket bleibt aktiv.</p>
+        <ul class="steps">
+          <li data-n="1">Capture-Panel → Einfrieren-Button (oder Konsole: <code>freeze on</code>)</li>
+          <li data-n="2">Button wird blau → Stream eingefroren</li>
+          <li data-n="3">Nochmals klicken → Stream läuft wieder</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Ebenen -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">🗂</div>
+        <div class="card-meta">
+          <div class="card-name">Ebenen &amp; Objekt-Manager</div>
+          <div class="card-short">Objekte in Ebenen organisieren, sperren, verstecken</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Das Objekte-Panel (linke Seitenleiste) listet alle Canvas-Objekte und Hilfslinien. Ebenen können erstellt und mit Drag-and-Drop befüllt werden.</p>
+        <ul class="steps">
+          <li data-n="1">Doppelklick auf Objekt-Name → umbenennen</li>
+          <li data-n="2">🔒-Icon → Objekt sperren (nicht verschiebbar)</li>
+          <li data-n="3">👁-Icon → Objekt ausblenden</li>
+          <li data-n="4">↑/↓-Buttons → Reihenfolge (Z-Order) ändern</li>
+          <li data-n="5">Rechtsklick auf Eintrag → In andere Ebene verschieben</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ EINRASTEN ═══ -->
+  <div class="section" id="snap">
+    <div class="section-title">Einrasten &amp; Hilfslinien</div>
+
+    <!-- Grid -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⬛</div>
+        <div class="card-meta">
+          <div class="card-name">Raster</div>
+          <div class="card-short">Sichtbares Gitter mit optionalem Einrasten</div>
+        </div>
+        <div class="card-sc">Ctrl+'</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Ansicht → Raster anzeigen (<kbd>Ctrl+'</kbd>) → Raster ein/aus</li>
+          <li data-n="2">Ansicht → Raster einrasten → Snap an Gitterpunkten</li>
+          <li data-n="3">Raster-Einstellungen: Größe, Farbe, Deckkraft, Ursprung</li>
+          <li data-n="4">Grid-Ursprung: eigene Inputs oder "Pick"-Button → Klick auf Canvas setzt Ursprung</li>
+        </ul>
+        <div class="tip"><strong>Snap temporär deaktivieren:</strong> <kbd>Ctrl</kbd> gedrückt halten während dem Verschieben.</div>
+      </div>
+    </div>
+
+    <!-- Hilfslinien -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⸻</div>
+        <div class="card-meta">
+          <div class="card-name">Hilfslinien</div>
+          <div class="card-short">Horizontale und vertikale Referenzlinien</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Aus dem horizontalen Lineal ziehen → horizontale Hilfslinie</li>
+          <li data-n="2">Aus dem vertikalen Lineal ziehen → vertikale Hilfslinie</li>
+          <li data-n="3">Erster Klick auf Hilfslinie → auswählen (gelb)</li>
+          <li data-n="4">Klick + Drag → verschieben</li>
+          <li data-n="5">Über den Canvas-Rand ziehen → löschen</li>
+          <li data-n="6"><kbd>Entf</kbd> → ausgewählte Hilfslinie löschen</li>
+        </ul>
+        <div class="tip">Ansicht → Hilfslinien einrasten → Objekte rasten beim Verschieben an Hilfslinien ein.</div>
+      </div>
+    </div>
+
+    <!-- Objekt-Snap -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">🧲</div>
+        <div class="card-meta">
+          <div class="card-name">Objekt-Einrasten</div>
+          <div class="card-short">Magnetisch an Ecken und Mittelpunkten anderer Objekte</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Beim Verschieben rastet ein Objekt automatisch an Ecken, Kantenmittelpunkten und Endpunkten von Linien anderer Objekte ein (Threshold: 12px). Ein cyan-farbiger Kreis zeigt den Snap-Punkt an.</p>
+        <div class="tip"><kbd>Ctrl</kbd> gedrückt halten → Snap temporär deaktivieren. Achssperrung (<kbd>Alt+X</kbd>/<kbd>Alt+Y</kbd>) deaktiviert Snap ebenfalls.</div>
+      </div>
+    </div>
+
+    <!-- PCB Snap -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">📐</div>
+        <div class="card-meta">
+          <div class="card-name">PCB-Kanten-Snap (Beta)</div>
+          <div class="card-short">Objekte rasten an Bildkanten des PCB-Fotos ein</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Analysiert beim Verschieben eines Objekts den Bildsensor entlang der Objektkanten und rastet am stärksten Gradienten ein.</p>
+        <ul class="steps">
+          <li data-n="1">Ansicht → PCB-Kanten → Aktivieren</li>
+          <li data-n="2">Suchradius und Gradient-Schwellwert anpassen</li>
+          <li data-n="3">Objekte verschieben → Snap an PCB-Strukturen</li>
+        </ul>
+        <div class="warn-box">Feature befindet sich im Beta-Stadium. Funktioniert am besten mit hohem Kontrast zwischen Bauteil und Hintergrund.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DATEI ═══ -->
+  <div class="section" id="file">
+    <div class="section-title">Datei &amp; Projekt</div>
+
+    <!-- Speichern -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">💾</div>
+        <div class="card-meta">
+          <div class="card-name">Speichern &amp; Öffnen</div>
+          <div class="card-short">.scopecam — gültiges PNG mit eingebetteten Metadaten</div>
+        </div>
+        <div class="card-sc">Ctrl+S</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <div class="format-row">
+          <div class="format-tag">.scopecam</div>
+          <span style="color:var(--muted)">= gültiges PNG + iTXt-Chunk mit JSON-Metadaten</span>
+        </div>
+        <p style="margin-top:10px">Datei kann in Paint.NET, Pinta und anderen PNG-Editoren geöffnet werden (zeigt dann das Hintergrundbild).</p>
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Speichern</div><div class="mv"><kbd>Ctrl+S</kbd></div></div>
+          <div class="mini-card"><div class="mk">Speichern unter</div><div class="mv"><kbd>Ctrl+Shift+S</kbd></div></div>
+          <div class="mini-card"><div class="mk">Öffnen</div><div class="mv"><kbd>Ctrl+O</kbd></div></div>
+          <div class="mini-card"><div class="mk">File Manager</div><div class="mv">Datei → File Manager</div></div>
+        </div>
+        <p style="margin-top:10px">Der <strong>File Manager</strong> (Server-seitig) zeigt eine Vorschau beim Klick auf .scopecam-Dateien. Ordner erstellen, umbenennen, löschen — alles im Modal.</p>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">📤</div>
+        <div class="card-meta">
+          <div class="card-name">Export</div>
+          <div class="card-short">PNG, SVG oder JSON exportieren</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">PNG</div><div class="mv">Datei → PNG exportieren</div></div>
+          <div class="mini-card"><div class="mk">SVG</div><div class="mv">Datei → SVG exportieren</div></div>
+          <div class="mini-card"><div class="mk">JSON</div><div class="mv">Datei → JSON exportieren</div></div>
+          <div class="mini-card"><div class="mk">Konsole</div><div class="mv"><code>export png</code> / <code>export svg</code></div></div>
+        </div>
+        <div class="tip">SVG-Export enthält alle Fabric-Objekte als Vektoren — ohne das Hintergrundbild.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ KI ═══ -->
+  <div class="section" id="ki">
+    <div class="section-title">KI-Integration</div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">🤖</div>
+        <div class="card-meta">
+          <div class="card-name">KI einrichten</div>
+          <div class="card-short">OpenAI, Anthropic, Google oder eigener Endpunkt</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <ul class="steps">
+          <li data-n="1">Einstellungen öffnen (Zahnrad-Symbol oder Menü)</li>
+          <li data-n="2">Tab <strong>KI</strong> → Provider wählen (OpenAI / Anthropic / Google / Custom)</li>
+          <li data-n="3">API-Key eingeben</li>
+          <li data-n="4">Modelle laden → Modell auswählen</li>
+          <li data-n="5">Optional: Eigene Prompt-Vorlage, Extended Thinking aktivieren</li>
+          <li data-n="6">Verbindung testen → Speichern</li>
+        </ul>
+        <div class="tip"><strong>Google:</strong> Alle Requests laufen über den Backend-Proxy (<code>/api/ki_proxy</code>) — kein CORS-Problem.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">💬</div>
+        <div class="card-meta">
+          <div class="card-name">KI-Chat &amp; Aktionen</div>
+          <div class="card-short">KI sieht Canvas + Live-Frame und kann Objekte erstellen</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p>Das KI-Panel (linke Seitenleiste) zeigt den Chat. Mit jedem Request sendet die KI automatisch:</p>
+        <ul class="steps">
+          <li data-n="1">Aktuellen Canvas-Zustand (alle Objekte, Ebenen, Hilfslinien)</li>
+          <li data-n="2">Aktuelles Live-Frame (JPEG)</li>
+          <li data-n="3">Deine Nachricht</li>
+        </ul>
+        <p style="margin-top:10px">Die KI kann folgende <strong>Aktionen</strong> ausführen:</p>
+        <div class="grid2">
+          <div class="mini-card"><div class="mk">Erstellen</div><div class="mv">rect, circle, line, arrow, dimension, text</div></div>
+          <div class="mini-card"><div class="mk">Bearbeiten</div><div class="mv">move, delete, setProps, rename</div></div>
+          <div class="mini-card"><div class="mk">Strukturieren</div><div class="mv">link, unlink, createLayer, moveToLayer</div></div>
+          <div class="mini-card"><div class="mk">Hilfslinien</div><div class="mv">addGuide, moveGuide, removeGuide, clearGuides</div></div>
+        </div>
+        <div class="tip"><strong>Bereich-Auswahl (⊠):</strong> Button im KI-Panel → Rubber-Band auf Canvas → nur dieser Ausschnitt wird gesendet. Koordinaten-Offset wird automatisch verrechnet.</div>
+        <div class="tip"><strong>Berechtigungen:</strong> Einstellungen → KI → Berechtigungen → granular steuern was die KI darf.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ KONSOLE ═══ -->
+  <div class="section" id="console">
+    <div class="section-title">Konsole (<kbd>F12</kbd>)</div>
+
+    <div class="card open">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">🖥</div>
+        <div class="card-meta">
+          <div class="card-name">Terminal-Konsole</div>
+          <div class="card-short">48 Befehle, Tab-Completion, Befehls-History</div>
+        </div>
+        <div class="card-sc">F12</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <p><kbd>F12</kbd> öffnet/schließt die Konsole. <kbd>Tab</kbd> = Autocomplete. <kbd>↑</kbd>/<kbd>↓</kbd> = History.</p>
+
+        <table class="cmd-table">
+          <tr><th>Befehl</th><th>Syntax</th><th>Beschreibung</th></tr>
+          <!-- OBJEKTE -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">OBJEKTE</td></tr>
+          <tr><td>list</td><td>list [filter]</td><td>Alle Canvas-Objekte auflisten</td></tr>
+          <tr><td>info</td><td>info &lt;name/#idx&gt;</td><td>Details zu einem Objekt</td></tr>
+          <tr><td>select</td><td>select &lt;name/#idx&gt;</td><td>Objekt auswählen</td></tr>
+          <tr><td>delete</td><td>delete &lt;name/#idx&gt;</td><td>Objekt löschen</td></tr>
+          <tr><td>rename</td><td>rename &lt;ref&gt; &lt;neuerName&gt;</td><td>Umbenennen</td></tr>
+          <tr><td>move</td><td>move &lt;ref&gt; &lt;x&gt; &lt;y&gt;</td><td>Verschieben</td></tr>
+          <tr><td>scale</td><td>scale &lt;ref&gt; &lt;sx&gt; [sy]</td><td>Skalieren</td></tr>
+          <tr><td>rotate</td><td>rotate &lt;ref&gt; &lt;grad&gt;</td><td>Drehen</td></tr>
+          <tr><td>color</td><td>color &lt;ref&gt; &lt;#hex&gt;</td><td>Farbe setzen</td></tr>
+          <tr><td>opacity</td><td>opacity &lt;ref&gt; &lt;0-1&gt;</td><td>Deckkraft</td></tr>
+          <tr><td>lock / unlock</td><td>lock &lt;ref&gt;</td><td>Sperren / Entsperren</td></tr>
+          <tr><td>hide / show</td><td>hide &lt;ref&gt;</td><td>Verstecken / Anzeigen</td></tr>
+          <tr><td>duplicate</td><td>duplicate &lt;ref&gt;</td><td>Duplizieren</td></tr>
+          <tr><td>group / ungroup</td><td>group</td><td>Verknüpfen / Auflösen</td></tr>
+          <tr><td>bringFwd / sendBwd</td><td>bringFwd &lt;ref&gt;</td><td>Z-Order ändern</td></tr>
+          <!-- MESSEN -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">MESSEN</td></tr>
+          <tr><td>measure</td><td>measure &lt;ref1&gt; &lt;ref2&gt;</td><td>Abstand Mittelpunkte</td></tr>
+          <tr><td>bbox</td><td>bbox &lt;ref&gt;</td><td>Bounding-Box</td></tr>
+          <tr><td>area</td><td>area &lt;ref&gt;</td><td>Fläche in px² / mm²</td></tr>
+          <tr><td>count</td><td>count [typ]</td><td>Objekte zählen</td></tr>
+          <tr><td>traceLen</td><td>traceLen &lt;gruppenPrefix&gt;</td><td>Leiterbahn-Gesamtlänge</td></tr>
+          <!-- ANSICHT -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">ANSICHT</td></tr>
+          <tr><td>zoom</td><td>zoom &lt;faktor|in|out|reset&gt;</td><td>Zoom setzen</td></tr>
+          <tr><td>fit / center / pan</td><td>pan &lt;x&gt; &lt;y&gt;</td><td>Pan zurücksetzen / setzen</td></tr>
+          <tr><td>zoomSel</td><td>zoomSel</td><td>Zoom auf Auswahl</td></tr>
+          <!-- RASTER / HILFSLINIEN -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">RASTER &amp; HILFSLINIEN</td></tr>
+          <tr><td>grid</td><td>grid [on|off]</td><td>Raster ein/aus</td></tr>
+          <tr><td>gridSize</td><td>gridSize &lt;px&gt;</td><td>Rastergröße</td></tr>
+          <tr><td>gridOrigin</td><td>gridOrigin &lt;x&gt; &lt;y&gt;</td><td>Raster-Ursprung</td></tr>
+          <tr><td>snap</td><td>snap [on|off]</td><td>Snap ein/aus</td></tr>
+          <tr><td>guide</td><td>guide &lt;h|v&gt; &lt;pos&gt;</td><td>Hilfslinie hinzufügen</td></tr>
+          <tr><td>guides / clearGuides</td><td>guides</td><td>Auflisten / Alle löschen</td></tr>
+          <!-- KAMERA -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">KAMERA</td></tr>
+          <tr><td>device</td><td>device &lt;pfad|demo&gt;</td><td>Kameragerät wechseln</td></tr>
+          <tr><td>freeze</td><td>freeze [on|off]</td><td>Stream einfrieren</td></tr>
+          <tr><td>quality</td><td>quality &lt;10-100&gt;</td><td>JPEG-Qualität</td></tr>
+          <tr><td>fps</td><td>fps &lt;1-60&gt;</td><td>Max-FPS</td></tr>
+          <!-- DATEI -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">DATEI &amp; EBENEN</td></tr>
+          <tr><td>save / saveAs</td><td>save</td><td>Projekt speichern</td></tr>
+          <tr><td>export</td><td>export &lt;png|svg|json&gt;</td><td>Exportieren</td></tr>
+          <tr><td>layers / layer</td><td>layer &lt;name&gt;</td><td>Ebenen auflisten / erstellen</td></tr>
+          <!-- KI -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">KI</td></tr>
+          <tr><td>ki</td><td>ki &lt;prompt&gt;</td><td>Nachricht an KI senden</td></tr>
+          <tr><td>create</td><td>create rect x=10 y=10 w=80 h=40</td><td>Objekt direkt erstellen</td></tr>
+          <tr><td>setProps</td><td>setProps &lt;ref&gt; stroke=#ff0000</td><td>Eigenschaften setzen</td></tr>
+          <tr><td>action</td><td>action {"action":"move","id":"…"}</td><td>Rohe KI-Aktion ausführen</td></tr>
+          <tr><td>actions</td><td>actions</td><td>Alle verfügbaren Aktionen</td></tr>
+          <tr><td>clearKi</td><td>clearKi</td><td>KI-Kontext zurücksetzen</td></tr>
+          <!-- SYSTEM -->
+          <tr><td colspan="3" style="color:var(--accent);padding-top:10px;font-size:11px;letter-spacing:.08em">SYSTEM</td></tr>
+          <tr><td>help</td><td>help [befehl]</td><td>Befehlsliste oder Hilfe zu Befehl</td></tr>
+          <tr><td>design</td><td>design dark|light|nord|…</td><td>Design wechseln</td></tr>
+          <tr><td>eval</td><td>eval canvas.getObjects().length</td><td>Beliebiges JS ausführen</td></tr>
+          <tr><td>clear / reload</td><td>clear</td><td>Konsole leeren / Seite laden</td></tr>
+        </table>
+
+        <div class="tip" style="margin-top:16px"><strong>Objekt-Referenzen:</strong> <code>#0</code> = erstes Objekt per Index · <code>C217</code> = exakter Name · <code>cap</code> = unscharfe Suche · kein Argument = aktuelle Auswahl.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SHORTCUTS ═══ -->
+  <div class="section" id="shortcuts">
+    <div class="section-title">Tastenkürzel</div>
+    <div class="card open">
+      <div class="card-header" onclick="toggle(this)">
+        <div class="card-icon">⌨</div>
+        <div class="card-meta">
+          <div class="card-name">Alle Shortcuts</div>
+          <div class="card-short">Einstellungen → Tastenkürzel zum Anpassen</div>
+        </div>
+        <div class="card-sc">—</div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card-body">
+        <div class="sc-grid">
+          <div class="sc-item"><span class="label">Auswahl</span><kbd>S</kbd></div>
+          <div class="sc-item"><span class="label">Hand</span><kbd>H</kbd></div>
+          <div class="sc-item"><span class="label">Linie</span><kbd>L</kbd></div>
+          <div class="sc-item"><span class="label">Pfeil</span><kbd>A</kbd></div>
+          <div class="sc-item"><span class="label">Bemaßung</span><kbd>D</kbd></div>
+          <div class="sc-item"><span class="label">Rechteck</span><kbd>R</kbd></div>
+          <div class="sc-item"><span class="label">Kreis</span><kbd>C</kbd></div>
+          <div class="sc-item"><span class="label">Text</span><kbd>T</kbd></div>
+          <div class="sc-item"><span class="label">Freihand</span><kbd>F</kbd></div>
+          <div class="sc-item"><span class="label">Polylinie</span><kbd>P</kbd></div>
+          <div class="sc-item"><span class="label">Speichern</span><kbd>Ctrl+S</kbd></div>
+          <div class="sc-item"><span class="label">Speichern unter</span><kbd>Ctrl+Shift+S</kbd></div>
+          <div class="sc-item"><span class="label">Öffnen</span><kbd>Ctrl+O</kbd></div>
+          <div class="sc-item"><span class="label">Rückgängig</span><kbd>Ctrl+Z</kbd></div>
+          <div class="sc-item"><span class="label">Wiederholen</span><kbd>Ctrl+Y</kbd></div>
+          <div class="sc-item"><span class="label">Kopieren</span><kbd>Ctrl+C</kbd></div>
+          <div class="sc-item"><span class="label">Einfügen</span><kbd>Ctrl+V</kbd></div>
+          <div class="sc-item"><span class="label">Duplizieren</span><kbd>Ctrl+D</kbd></div>
+          <div class="sc-item"><span class="label">Verknüpfen</span><kbd>Ctrl+G</kbd></div>
+          <div class="sc-item"><span class="label">Verknüpf. aufheben</span><kbd>Ctrl+Shift+G</kbd></div>
+          <div class="sc-item"><span class="label">Löschen</span><kbd>Entf</kbd></div>
+          <div class="sc-item"><span class="label">Abbrechen</span><kbd>Esc</kbd></div>
+          <div class="sc-item"><span class="label">X-Achse sperren</span><kbd>Alt+X</kbd></div>
+          <div class="sc-item"><span class="label">Y-Achse sperren</span><kbd>Alt+Y</kbd></div>
+          <div class="sc-item"><span class="label">Raster an/aus</span><kbd>Ctrl+'</kbd></div>
+          <div class="sc-item"><span class="label">Konsole</span><kbd>F12</kbd></div>
+          <div class="sc-item"><span class="label">Polylinie fertig</span><kbd>Enter</kbd></div>
+          <div class="sc-item"><span class="label">Winkeleinrasten</span><kbd>Shift</kbd> beim Zeichen</div>
+          <div class="sc-item"><span class="label">Snap ignorieren</span><kbd>Ctrl</kbd> beim Verschieben</div>
+          <div class="sc-item"><span class="label">Proportional</span><kbd>Shift</kbd> beim Skalieren</div>
+        </div>
+        <div class="tip" style="margin-top:14px"><strong>Alle Shortcuts anpassbar:</strong> Einstellungen → Tastenkürzel → Feld klicken → neue Taste drücken.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  ScopeCam — <a href="/">App öffnen</a> · <a href="https://github.com/Planqton/scopeCam" target="_blank">GitHub</a>
+</footer>
+
+<script>
+function toggle(header) {
+  const card = header.parentElement;
+  card.classList.toggle('open');
+}
+// Keyboard: Enter on card-header
+document.querySelectorAll('.card-header').forEach(h => {
+  h.setAttribute('tabindex', '0');
+  h.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(h); } });
+});
+// Smooth scroll for nav links
+document.querySelectorAll('header nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>
