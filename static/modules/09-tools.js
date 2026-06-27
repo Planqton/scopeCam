@@ -70,26 +70,29 @@ export function activateTool(tool) {
   }
 
   // Eigenschaften-Sektionen anzeigen
+  const isDrawTool = tool !== 'select' && tool !== 'hand';
   if (tool === 'hand') {
     clearPropsPanel();
+  } else if (tool === 'select') {
+    clearPropsPanel(); // propsDefaults bleibt verborgen bis Objekt ausgewählt
   } else if (tool === 'text') {
-    showPropsSection('propsObj',  true);
-    showPropsSection('propsText', true);
-  } else if (tool !== 'select' && tool !== 'freehand') {
-    showPropsSection('propsObj',  true);
-    showPropsSection('propsText', false);
-  } else if (tool === 'freehand') {
+    showPropsSection('propsDefaults', true);
     showPropsSection('propsObj',  false);
     showPropsSection('propsText', false);
-  } else if (tool === 'polyline' || tool === 'measure' || tool === 'callout') {
-    showPropsSection('propsObj',  true);
+  } else if (tool === 'freehand') {
+    showPropsSection('propsDefaults', true);
+    showPropsSection('propsObj',  false);
     showPropsSection('propsText', false);
   } else if (tool === 'calibrate') {
-    showPropsSection('propsObj',  true);
+    showPropsSection('propsDefaults', true);
+    showPropsSection('propsObj',  false);
     showPropsSection('propsText', false);
     _openCalibrateModal();
   } else {
-    clearPropsPanel();
+    // Alle anderen Zeichenwerkzeuge (line, arrow, dimension, rect, circle, polyline, measure, callout)
+    showPropsSection('propsDefaults', true);
+    showPropsSection('propsObj',  false);
+    showPropsSection('propsText', false);
   }
 
   document.getElementById('statusTool').textContent = 'Werkzeug: ' + (TOOL_NAMES[tool] || tool);

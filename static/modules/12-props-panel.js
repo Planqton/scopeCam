@@ -16,6 +16,7 @@ export function updatePropsPanel() {
   const objs = S.canvas.getActiveObjects();
   if (objs.length === 0) { clearPropsPanel(); return; }
 
+  showPropsSection('propsDefaults', false);
   showPropsSection('propsObj', true);
 
   // Für Mehrfachauswahl: Werte des ersten Objekts als Referenz zeigen.
@@ -66,10 +67,11 @@ export function updatePropsPanel() {
 }
 
 export function clearPropsPanel() {
-  showPropsSection('propsObj',   false);
-  showPropsSection('propsText',  false);
-  showPropsSection('propsDim',   false);
-  showPropsSection('propsAlign', false);
+  showPropsSection('propsDefaults', false);
+  showPropsSection('propsObj',      false);
+  showPropsSection('propsText',     false);
+  showPropsSection('propsDim',      false);
+  showPropsSection('propsAlign',    false);
 }
 
 // Rahmen
