@@ -56,7 +56,8 @@ document.getElementById('loadJsonInput').addEventListener('change', function () 
   const reader   = new FileReader();
   reader.onload  = e => {
     try {
-      S.canvas.loadFromJSON(JSON.parse(e.target.result), () => {
+      // fabric v6: loadFromJSON returns a Promise (2nd arg is now reviver, not callback)
+      S.canvas.loadFromJSON(JSON.parse(e.target.result)).then(() => {
         S.canvas.renderAll();
         saveHistory();
         refreshLayersList();
@@ -280,7 +281,8 @@ async function saveProjectAs() {
 // ── Laden (ArrayBuffer) ───────────────────────────────────────────────────────
 function _applyProjectData(p) {
   if (p.canvasJSON) {
-    S.canvas.loadFromJSON(p.canvasJSON, () => {
+    // fabric v6: loadFromJSON returns a Promise (2nd arg is now reviver, not callback)
+    S.canvas.loadFromJSON(p.canvasJSON).then(() => {
       S.canvas.renderAll();
       if (p.layers) { S.layers = JSON.parse(JSON.stringify(p.layers)); saveCurrentTabLayers(); }
       if (p.guides) { S.guideLines = p.guides; saveGuides(); drawGuides(); }

@@ -343,7 +343,7 @@ function refreshLayersList() {
       upBtn.disabled    = idx === objects.length - 1;
       upBtn.addEventListener('click', e => {
         e.stopPropagation();
-        S.canvas.bringForward(obj);
+        S.canvas.bringObjectForward(obj);
         S.canvas.renderAll();
         refreshLayersList();
       });
@@ -355,7 +355,7 @@ function refreshLayersList() {
       downBtn.disabled    = idx === 0;
       downBtn.addEventListener('click', e => {
         e.stopPropagation();
-        S.canvas.sendBackwards(obj);
+        S.canvas.sendObjectBackwards(obj);
         S.canvas.renderAll();
         refreshLayersList();
       });

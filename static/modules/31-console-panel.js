@@ -241,14 +241,15 @@ function _conSetVis(ref, val) {
   _cOk((val ? 'Sichtbar' : 'Versteckt') + ': ' + (obj.customName || obj.type));
 }
 
-cmd('bringFwd',    'bringFwd <name/#idx>',    'Eine Ebene nach vorne',   args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringForward(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('sendBwd',     'sendBwd <name/#idx>',     'Eine Ebene nach hinten',  args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendBackwards(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('bringTop',    'bringTop <name/#idx>',    'Ganz nach vorne',         args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringToFront(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('sendBottom',  'sendBottom <name/#idx>',  'Ganz nach hinten',        args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendToBack(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('bringFwd',    'bringFwd <name/#idx>',    'Eine Ebene nach vorne',   args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringObjectForward(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('sendBwd',     'sendBwd <name/#idx>',     'Eine Ebene nach hinten',  args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendObjectBackwards(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('bringTop',    'bringTop <name/#idx>',    'Ganz nach vorne',         args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringObjectToFront(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('sendBottom',  'sendBottom <name/#idx>',  'Ganz nach hinten',        args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendObjectToBack(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
 
 cmd('duplicate', 'duplicate <name/#idx>', 'Objekt duplizieren', args => {
   const obj = _conResolveObj(args[0]); if (!obj) return;
-  obj.clone(cl => { _addClonedToCanvas(cl, 'Konsole: Duplizieren', 'Dupliziert'); _cOk('Dupliziert'); }, CUSTOM_PROPS);
+  // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
+  obj.clone(CUSTOM_PROPS).then(cl => { _addClonedToCanvas(cl, 'Konsole: Duplizieren', 'Dupliziert'); _cOk('Dupliziert'); });
 });
 
 cmd('group',   'group',  'Ausgewählte Objekte verknüpfen',  () => { linkSelectedObjects();  _cOk('Verknüpft'); });
@@ -640,7 +641,8 @@ function _conResolveObj(ref) {
   if (ref === undefined || ref === null) {
     const sel = S.canvas.getActiveObject();
     if (!sel) { _cErr('Kein Objekt angegeben und nichts ausgewählt'); return null; }
-    if (sel.type === 'activeSelection') return sel.getObjects()[0];
+    // fabric v6: ActiveSelection.type returns 'activeselection' (all lowercase)
+    if (sel.type === 'activeselection' || sel instanceof fabric.ActiveSelection) return sel.getObjects()[0];
     return sel;
   }
   const objs = S.canvas.getObjects();

@@ -83,7 +83,8 @@ function loadCanvasFromJSON(json) {
     refreshLayersList();
     return;
   }
-  S.canvas.loadFromJSON(typeof json === 'string' ? JSON.parse(json) : json, () => {
+  // fabric v6: loadFromJSON returns a Promise (2nd arg is now reviver, not callback)
+  S.canvas.loadFromJSON(typeof json === 'string' ? JSON.parse(json) : json).then(() => {
     applyLayerVisibilityToObjects();
     S.canvas.renderAll();
     refreshLayersList();

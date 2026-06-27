@@ -19,10 +19,11 @@ function copySelected() {
   const objs = S.canvas.getActiveObjects();
   if (!objs.length) return;
   const active = S.canvas.getActiveObject();
-  active.clone(cloned => {
+  // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
+  active.clone(CUSTOM_PROPS).then(cloned => {
     S._clipboard = cloned;
     setStatus(`${objs.length} Objekt${objs.length > 1 ? 'e' : ''} kopiert`);
-  }, CUSTOM_PROPS);
+  });
 }
 
 function _addClonedToCanvas(cloned, label, statusMsg) {
@@ -46,12 +47,14 @@ function _addClonedToCanvas(cloned, label, statusMsg) {
 
 function pasteClipboard() {
   if (!S._clipboard) return;
-  S._clipboard.clone(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'), CUSTOM_PROPS);
+  // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
+  S._clipboard.clone(CUSTOM_PROPS).then(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'));
 }
 
 function duplicateSelected() {
   if (!S.canvas.getActiveObjects().length) return;
-  S.canvas.getActiveObject().clone(cloned => _addClonedToCanvas(cloned, 'Dupliziert'), CUSTOM_PROPS);
+  // fabric v6: clone() returns a Promise; signature is clone(propertiesToInclude) → Promise
+  S.canvas.getActiveObject().clone(CUSTOM_PROPS).then(cloned => _addClonedToCanvas(cloned, 'Dupliziert'));
 }
 
 document.getElementById('copyBtn').addEventListener('click', copySelected);

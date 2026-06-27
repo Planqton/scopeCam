@@ -45,7 +45,8 @@ function saveHistory(labelArg) {
 function restoreHistory(idx) {
   const entry = S.history[idx];
   if (!entry) return;
-  S.canvas.loadFromJSON(entry.json, () => {
+  // fabric v6: loadFromJSON returns a Promise (2nd arg is now reviver, not callback)
+  S.canvas.loadFromJSON(entry.json).then(() => {
     applyLayerVisibilityToObjects();
     S.canvas.renderAll();
     refreshLayersList();

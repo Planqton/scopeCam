@@ -42,10 +42,10 @@ document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {
   const obj = isMulti ? null : target;
 
   const orderItems = obj ? [
-    { label: '▲▲ Ganz nach vorne', action: () => { S.canvas.bringToFront(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▲  Eine Ebene vor',  action: () => { S.canvas.bringForward(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▼  Eine Ebene zurück',action: () => { S.canvas.sendBackwards(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▼▼ Ganz nach hinten', action: () => { S.canvas.sendToBack(obj);  S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▲▲ Ganz nach vorne', action: () => { S.canvas.bringObjectToFront(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▲  Eine Ebene vor',  action: () => { S.canvas.bringObjectForward(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▼  Eine Ebene zurück',action: () => { S.canvas.sendObjectBackwards(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▼▼ Ganz nach hinten', action: () => { S.canvas.sendObjectToBack(obj);  S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
     '-',
   ] : [];
 

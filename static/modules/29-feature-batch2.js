@@ -216,7 +216,8 @@ function _renderCompLib() {
     loadBtn.textContent = 'Einfügen';
     loadBtn.style.cssText = 'padding:2px 8px;border-radius:3px;border:1px solid var(--clr-border,#444);background:var(--clr-hover,#2a2a2a);color:inherit;cursor:pointer;font-size:11px';
     loadBtn.addEventListener('click', () => {
-      fabric.util.enlivenObjects(entry.objects, objs => {
+      // fabric v6: enlivenObjects returns a Promise; signature is enlivenObjects(objects, options?) → Promise<FabricObject[]>
+      fabric.util.enlivenObjects(entry.objects).then(objs => {
         const gidMap = {};
         objs.forEach(o => {
           o.objId = crypto.randomUUID();

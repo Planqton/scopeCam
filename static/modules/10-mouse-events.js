@@ -43,7 +43,7 @@ function clearTextPreview() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 S.canvas.on('mouse:move', opt => {
-  const p = S.canvas.getPointer(opt.e);
+  const p = S.canvas.getScenePoint(opt.e);
   document.getElementById('statusCoords').textContent = `x: ${Math.round(p.x)}  y: ${Math.round(p.y)}`;
 
   if (S.currentTool === 'text') { syncTextPreview(p.x, p.y); return; }

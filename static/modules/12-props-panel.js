@@ -15,7 +15,8 @@ function updatePropsPanel() {
   // Für Mehrfachauswahl: Werte des ersten Objekts als Referenz zeigen.
   // Bei ActiveSelection (Link-Gruppe) IText-Objekt bevorzugen für Text-Properties.
   const _rawObj = S.canvas.getActiveObject();
-  const obj = _rawObj?.type === 'activeSelection'
+  // fabric v6: ActiveSelection.type getter returns 'activeselection' (all lowercase)
+  const obj = (_rawObj?.type === 'activeselection' || _rawObj instanceof fabric.ActiveSelection)
     ? (_rawObj.getObjects().find(o => o instanceof fabric.IText) || _rawObj.getObjects()[0] || _rawObj)
     : _rawObj;
   _refreshCoordFields(obj);
