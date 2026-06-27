@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#111"/>
+  <!-- Mikroskop-Tubus -->
+  <rect x="13" y="3" width="6" height="12" rx="2" fill="#1bc9e9"/>
+  <!-- Okular oben -->
+  <rect x="11" y="2" width="10" height="3" rx="1.5" fill="#0fa8c4"/>
+  <!-- Arm -->
+  <rect x="10" y="14" width="12" height="3" rx="1" fill="#0fa8c4"/>
+  <!-- Stativ -->
+  <rect x="14" y="17" width="4" height="7" rx="1" fill="#1bc9e9"/>
+  <!-- Basis -->
+  <rect x="8" y="24" width="16" height="3" rx="1.5" fill="#0fa8c4"/>
+  <!-- Objektiv -->
+  <rect x="14" y="13" width="4" height="5" rx="1" fill="#07809e"/>
+  <!-- Licht-Punkt (Linse) -->
+  <circle cx="16" cy="20" r="2" fill="#1bc9e9" opacity=".5"/>
+</svg>

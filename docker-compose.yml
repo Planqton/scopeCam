@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  scopecam:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - scopecam_data:/app/data
+      - /dev:/dev
+    privileged: true
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+
+volumes:
+  scopecam_data:

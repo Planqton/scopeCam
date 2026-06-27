@@ -1,0 +1,77 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// VIDEO / WEBSOCKET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const videoCanvas = document.getElementById('videoCanvas');
+const videoCtx    = videoCanvas.getContext('2d');
+let ws = null;
+
+const demoImg = new Image();
+demoImg.src = '/demo.png';
+
+function isDemo() { return settings.device === 'demo'; }
+
+function showDemo() {
+  if (!demoImg.complete || !demoImg.naturalWidth) { demoImg.onload = showDemo; return; }
+  videoCanvas.width  = demoImg.naturalWidth;
+  videoCanvas.height = demoImg.naturalHeight;
+  videoCtx.drawImage(demoImg, 0, 0);
+  syncCanvasSize();
+}
+
+let noSignalTimer = null;
+
+function showNoSignal(visible) {
+  document.getElementById('noSignal').classList.toggle('visible', visible);
+}
+
+function connectWS() {
+  if (isDemo()) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/stream`);
+  ws.binaryType = 'blob';
+
+  // Kein Signal-Overlay nach 3 Sekunden ohne Frame
+  clearTimeout(noSignalTimer);
+  noSignalTimer = setTimeout(() => showNoSignal(true), 3000);
+
+  ws.onmessage = async (e) => {
+    if (isDemo()) return;
+    clearTimeout(noSignalTimer);
+    showNoSignal(false);
+    const bitmap = await createImageBitmap(e.data);
+    if (videoCanvas.width !== bitmap.width || videoCanvas.height !== bitmap.height) {
+      videoCanvas.width  = bitmap.width;
+      videoCanvas.height = bitmap.height;
+      syncCanvasSize();
+    }
+    if (!_streamFrozen) videoCtx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+  };
+  ws.onclose = () => {
+    showNoSignal(true);
+    if (!isDemo()) setTimeout(connectWS, 1000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+function stopCameraStream() {
+  clearTimeout(noSignalTimer);
+  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+}
+
+function applyDevice() {
+  const demoBanner = document.getElementById('demoBanner');
+  if (isDemo()) {
+    stopCameraStream();
+    showNoSignal(false);
+    showDemo();
+    if (demoBanner) demoBanner.style.display = 'flex';
+  } else {
+    showNoSignal(false);
+    if (demoBanner) demoBanner.style.display = 'none';
+    if (!ws || ws.readyState > 1) connectWS();
+  }
+}
+
+

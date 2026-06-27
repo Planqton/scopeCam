@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScopeCam</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+</head>
+<body>
+
+  <!-- ── Menu bar ──────────────────────────────────────────────────────────── -->
+  <div id="menuBar">
+    <span id="appTitle">ScopeCam</span>
+    <nav id="mainMenu">
+
+      <!-- Datei -->
+      <div class="menu-root">
+        <span class="menu-root-label">Datei</span>
+        <div class="menu-dropdown">
+          <div class="menu-item" id="saveProjectBtn"><span>&#128190; Speichern</span><span class="menu-shortcut">Ctrl+S</span></div>
+          <div class="menu-item" id="saveProjectAsBtn"><span>&#128190; Speichern unter&#8230;</span><span class="menu-shortcut">Ctrl+Shift+S</span></div>
+          <div class="menu-item" id="loadProjectBtn"><span>&#128194; &#214;ffnen&#8230;</span><span class="menu-shortcut">Ctrl+O</span></div>
+          <div class="menu-item" id="openFileManagerBtn"><span>&#128193; File Manager</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="saveJsonBtn"><span>JSON exportieren</span></div>
+          <div class="menu-item" id="loadJsonBtn"><span>JSON importieren</span></div>
+          <div class="menu-item" id="exportBtn"><span>&#128247; PNG exportieren</span></div>
+          <div class="menu-item" id="exportSvgBtn"><span>&#10067; SVG exportieren</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="openSettingsPage"><span>Einstellungen&#8230;</span></div>
+        </div>
+      </div>
+
+      <!-- Bearbeiten -->
+      <div class="menu-root">
+        <span class="menu-root-label">Bearbeiten</span>
+        <div class="menu-dropdown">
+          <div class="menu-item" id="undoBtn"><span>&#8617; R&#252;ckg&#228;ngig</span><span class="menu-shortcut">Ctrl+Z</span></div>
+          <div class="menu-item" id="redoBtn"><span>&#8618; Wiederholen</span><span class="menu-shortcut">Ctrl+Y</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="copyBtn"><span>Kopieren</span><span class="menu-shortcut">Ctrl+C</span></div>
+          <div class="menu-item" id="pasteBtn"><span>Einf&#252;gen</span><span class="menu-shortcut">Ctrl+V</span></div>
+          <div class="menu-item" id="duplicateBtn"><span>Duplizieren</span><span class="menu-shortcut">Ctrl+D</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="batchRenameBtn"><span>&#9998; Batch-Umbenennen&#8230;</span></div>
+          <div class="menu-item" id="compLibBtn"><span>&#128218; Komponent-Bibliothek&#8230;</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="linkBtn"><span>&#9935; Verknüpfen</span><span class="menu-shortcut">Ctrl+G</span></div>
+          <div class="menu-item" id="unlinkBtn"><span>&#9936; Verknüpfung aufheben</span><span class="menu-shortcut">Ctrl+Shift+G</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="deleteBtn"><span>&#128465; L&#246;schen</span><span class="menu-shortcut">Entf</span></div>
+          <div class="menu-item" id="clearBtn"><span>&#10005; Alle l&#246;schen</span></div>
+        </div>
+      </div>
+
+      <!-- Ansicht -->
+      <div class="menu-root">
+        <span class="menu-root-label">Ansicht</span>
+        <div class="menu-dropdown">
+          <div class="menu-item panel-toggle" data-panel="timeline">
+            <span class="checkmark"></span><span>Timeline</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="log">
+            <span class="checkmark"></span><span>Log Fenster</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="console">
+            <span class="checkmark"></span><span>Konsole</span><span class="menu-shortcut">F12</span>
+          </div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="gridToggleMenu"><span class="checkmark" id="gridCheckmark"></span><span>Raster anzeigen</span><span class="menu-shortcut">Ctrl+\'</span></div>
+          <div class="menu-item" id="gridSnapMenu"><span class="checkmark" id="gridSnapCheckmark"></span><span>Am Raster einrasten</span></div>
+          <div class="menu-item has-sub" id="pcbLiveSnapMenu">
+            <span class="checkmark" id="pcbLiveSnapCheckmark"></span>
+            <span class="menu-item-label">An PCB Kanten ausrichten <span style="font-size:9px;opacity:0.6">(Beta)</span></span>
+            <span class="sub-arrow">&#9658;</span>
+            <div class="menu-submenu" id="pcbLiveSnapSubmenu" style="min-width:200px;padding:8px">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:11px;color:var(--clr-muted)">Suchradius
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+                    <input id="pcbSnapSearchInput" type="range" min="4" max="60" value="20" style="flex:1;accent-color:#a855f7">
+                    <span id="pcbSnapSearchVal" style="font-size:9px;min-width:24px">20</span>px
+                  </div>
+                </label>
+                <label style="font-size:11px;color:var(--clr-muted)">Empfindlichkeit
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+                    <input id="pcbSnapGradInput" type="range" min="2" max="80" value="18" style="flex:1;accent-color:#a855f7">
+                    <span id="pcbSnapGradVal" style="font-size:9px;min-width:24px">18</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="menu-item has-sub">
+            <span class="menu-item-label">Raster einstellen</span>
+            <span class="sub-arrow">&#9658;</span>
+            <div class="menu-submenu" id="gridSettingsSubmenu" style="min-width:200px;padding:8px">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:11px;color:var(--clr-muted)">Rastermaß (px)
+                  <input id="gridSizeInput" type="number" min="4" max="200" value="20" style="width:100%;margin-top:3px;padding:3px 6px;background:var(--clr-input);border:1px solid var(--clr-border);color:var(--clr-text);border-radius:4px;font-size:12px">
+                </label>
+                <label style="font-size:11px;color:var(--clr-muted)">Farbe
+                  <input id="gridColorInput" type="color" value="#444444" style="width:100%;margin-top:3px;height:26px;border:1px solid var(--clr-border);border-radius:4px;cursor:pointer;background:var(--clr-input)">
+                </label>
+                <label style="font-size:11px;color:var(--clr-muted)">Deckkraft
+                  <input id="gridOpacityInput" type="range" min="5" max="80" value="25" style="width:100%;margin-top:3px">
+                </label>
+                <label style="font-size:11px;color:var(--clr-muted)">Ursprung X / Y
+                  <div style="display:flex;gap:4px;margin-top:3px">
+                    <input id="gridOriginX" type="number" value="0" style="flex:1;padding:3px 6px;background:var(--clr-input);border:1px solid var(--clr-border);color:var(--clr-text);border-radius:4px;font-size:12px">
+                    <input id="gridOriginY" type="number" value="0" style="flex:1;padding:3px 6px;background:var(--clr-input);border:1px solid var(--clr-border);color:var(--clr-text);border-radius:4px;font-size:12px">
+                    <button id="gridOriginPickBtn" title="Nächsten Klick als Ursprung setzen" style="padding:2px 6px;border-radius:4px;border:1px solid var(--clr-border);background:var(--clr-hover);color:inherit;cursor:pointer;font-size:11px">&#10753;</button>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="guidesVisibleMenu"><span class="checkmark" id="guidesVisibleCm"></span><span>Hilfslinien anzeigen</span></div>
+          <div class="menu-item" id="guidesSnapMenu"><span class="checkmark" id="guidesSnapCm"></span><span>An Hilfslinien einrasten</span></div>
+          <div class="menu-item" id="guidesClearMenu"><span style="width:14px;display:inline-block"></span><span>Alle Hilfslinien löschen</span></div>
+          <div class="menu-sep"></div>
+          <div class="menu-item" id="zoomToSelMenu"><span>&#128269; Zoom auf Auswahl</span><span class="menu-shortcut">Ctrl+Shift+E</span></div>
+          <div class="menu-item" id="zoomResetMenu"><span>&#128269; Zoom zur&#252;cksetzen</span><span class="menu-shortcut">Ctrl+0</span></div>
+        </div>
+      </div>
+
+      <!-- Werkzeuge -->
+      <div class="menu-root">
+        <span class="menu-root-label">Werkzeuge</span>
+        <div class="menu-dropdown">
+          <div class="menu-item panel-toggle" data-panel="tools">
+            <span class="checkmark"></span><span>Werkzeuge</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="props">
+            <span class="checkmark"></span><span>Eigenschaften</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="layers">
+            <span class="checkmark"></span><span>Objekte</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="capture">
+            <span class="checkmark"></span><span>Capture</span>
+          </div>
+          <div class="menu-item panel-toggle" data-panel="ki">
+            <span class="checkmark"></span><span>KI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ebenen -->
+      <div class="menu-root">
+        <span class="menu-root-label">Ebenen</span>
+        <div class="menu-dropdown">
+          <div class="menu-item panel-toggle" data-panel="layers">
+            <span class="checkmark"></span><span>Objekte anzeigen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hilfe -->
+      <div class="menu-root">
+        <span class="menu-root-label">Hilfe</span>
+        <div class="menu-dropdown"></div>
+      </div>
+
+    </nav>
+  </div>
+
+  <!-- ── Tab bar ───────────────────────────────────────────────────────────── -->
+  <div id="tabBar">
+    <div id="tabList"></div>
+    <button id="tabAddBtn" title="Neuer leerer Tab">+</button>
+  </div>
+
+  <!-- ── Main workspace: docks + viewer ───────────────────────────────────── -->
+  <div id="workspace">
+    <div id="dockLeft"  class="dock"></div>
+
+    <div id="viewer">
+      <div id="rulerCorner"></div>
+      <canvas id="rulerH"></canvas>
+      <canvas id="rulerV"></canvas>
+      <div id="canvasWrapper">
+        <canvas id="gridCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;transform-origin:50% 50%"></canvas>
+        <canvas id="guideCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:11"></canvas>
+        <button id="canvasAspectLock" title="Proportionen sperren">&#128275;</button>
+        <canvas id="videoCanvas"></canvas>
+        <canvas id="canvas"></canvas>
+        <div id="demoBanner">DEMO — kein Live-Bild · <a onclick="document.getElementById('openSettingsPage').click();document.querySelector('[data-settings-tab=device]')?.click()">Gerät konfigurieren</a></div>
+<div id="noSignal">
+          <div id="noSignalInner">
+            <div id="noSignalIcon">&#9634;</div>
+            <div>Kein Signal</div>
+            <div id="noSignalHint">Einstellungen → Gerät → Demo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dockRight" class="dock"></div>
+  </div>
+
+  <!-- ── Bottom dock ─────────────────────────────────────────────────────── -->
+  <div id="dockBottom" class="dock">
+    <div id="dockBottomTabs"></div>
+  </div>
+
+  <!-- ── Status bar ────────────────────────────────────────────────────────── -->
+  <div id="statusBar">
+    <span id="statusTool">Kein Werkzeug</span>
+    <span id="statusCoords">x: 0  y: 0</span>
+    <span id="statusScale"></span>
+    <span id="statusAction"></span>
+    <span id="statusTraceLen" style="color:#1bc9e9;font-size:11px"></span>
+    <span id="statusKeys"></span>
+    <div id="zoomControls">
+      <button id="zoomOutBtn" title="Herauszoomen (Ctrl+−)">&#8722;</button>
+      <span id="statusZoom">100%</span>
+      <button id="zoomInBtn"  title="Hineinzoomen (Ctrl+=)">+</button>
+      <button id="zoomResetBtn" title="Ansicht zur&#252;cksetzen (Pos1)">&#8634;</button>
+    </div>
+  </div>
+
+  <!-- ══ Panels ════════════════════════════════════════════════════════════════
+       Panels werden durch den Panel-Manager zwischen Body/Dock-Divs und
+       #panelHidden verschoben — niemals aus dem DOM entfernen, da sonst
+       document.getElementById() für Formularelemente fehlschlägt.
+  ═══════════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Werkzeuge -->
+  <div class="panel" data-panel="tools">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Werkzeuge</span>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close"    title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body">
+      <div class="tool-grid">
+        <!-- Auswahl -->
+        <button class="tool-btn" data-tool="select" title="Auswahl (S)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor"><path d="M3 2.5v11l3-3 2.5 4.5 1.6-.9L7.6 9.6H13Z"/></svg>
+        </button>
+        <!-- Hand / Pan -->
+        <button class="tool-btn" data-tool="hand" title="Verschieben / Pan (H)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 10.5V4.5a1 1 0 012 0V9"/>
+            <path d="M8.5 9V4a1 1 0 012 0v5"/>
+            <path d="M10.5 9a1 1 0 012 0v1c0 2.5-1.5 5-4.5 5H7C5 15 3.5 13.5 3.5 11.5V9.5L5 8"/>
+            <path d="M6.5 10.5V3.5a1 1 0 00-2 0v1.5"/>
+          </svg>
+        </button>
+        <!-- Linie -->
+        <button class="tool-btn" data-tool="line" title="Linie (L)">
+          <svg viewBox="0 0 16 16" width="15" height="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2.5" y1="13.5" x2="13.5" y2="2.5"/></svg>
+        </button>
+        <!-- Pfeil -->
+        <button class="tool-btn" data-tool="arrow" title="Pfeil (A)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="2.5" y1="13.5" x2="12.5" y2="3.5"/>
+            <polyline points="6.5,3.5 12.5,3.5 12.5,9.5"/>
+          </svg>
+        </button>
+        <!-- Bema&#223;ung -->
+        <button class="tool-btn" data-tool="dimension" title="Bema&#223;ung (D)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+            <polyline points="4.5,5.5 1.5,8 4.5,10.5"/>
+            <polyline points="11.5,5.5 14.5,8 11.5,10.5"/>
+            <line x1="1.5" y1="4.5" x2="1.5" y2="11.5"/>
+            <line x1="14.5" y1="4.5" x2="14.5" y2="11.5"/>
+          </svg>
+        </button>
+        <!-- Rechteck -->
+        <button class="tool-btn" data-tool="rect" title="Rechteck (R)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4.5" width="12" height="7"/></svg>
+        </button>
+        <!-- Kreis -->
+        <button class="tool-btn" data-tool="circle" title="Kreis (C)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="5.5"/></svg>
+        </button>
+        <!-- Text -->
+        <button class="tool-btn" data-tool="text" title="Text (T)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor"><path d="M2.5 3.5v2h4.5v8h2v-8H13.5v-2z"/></svg>
+        </button>
+        <!-- Freihand -->
+        <button class="tool-btn" data-tool="freehand" title="Freihand (F)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 2L14 5 5.5 13.5 2 14 2.5 10.5Z"/>
+            <line x1="9" y1="4" x2="12" y2="7"/>
+          </svg>
+        </button>
+        <!-- Polylinie -->
+        <button class="tool-btn" data-tool="polyline" title="Polylinie (P) – Klick=Punkt, Doppelklick/Enter=fertig">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2,13 5,5 10,9 14,3"/>
+          </svg>
+        </button>
+        <!-- Schnellmessung -->
+        <button class="tool-btn" data-tool="measure" title="Schnellmessung (M) – zwei Punkte anklicken">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="8" x2="14" y2="8"/>
+            <line x1="2" y1="5.5" x2="2" y2="10.5"/>
+            <line x1="14" y1="5.5" x2="14" y2="10.5"/>
+            <circle cx="2" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <!-- Callout -->
+        <button class="tool-btn" data-tool="callout" title="Callout – Ankerpunkt dann Textposition">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="10" height="6" rx="1.5"/>
+            <line x1="5" y1="11" x2="8" y2="8"/>
+            <circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <!-- Kalibrierung -->
+        <button class="tool-btn" data-tool="calibrate" title="Kalibrieren – Linie &#252;ber bekannte Strecke ziehen">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="8" x2="14" y2="8"/>
+            <line x1="2" y1="5" x2="2" y2="11"/>
+            <line x1="14" y1="5" x2="14" y2="11"/>
+            <text x="8" y="5" text-anchor="middle" font-size="4" fill="currentColor" stroke="none">mm</text>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eigenschaften -->
+  <div class="panel" data-panel="props">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Eigenschaften</span>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body">
+
+      <!-- Werkzeug-Standardwerte (immer sichtbar) -->
+      <div class="props-section" id="propsDefaults">
+        <div class="pform-row">
+          <label>Farbe</label>
+          <input type="color" id="colorPicker" value="#ff0000">
+        </div>
+        <div class="pcb-presets" id="pcbColorPresets" title="PCB-Lagenfarben">
+          <button class="pcb-pre" data-color="#ff3333" style="background:#ff3333" title="Signal"></button>
+          <button class="pcb-pre" data-color="#ffcc00" style="background:#ffcc00" title="Power"></button>
+          <button class="pcb-pre" data-color="#00cc44" style="background:#00cc44" title="GND"></button>
+          <button class="pcb-pre" data-color="#00aaff" style="background:#00aaff" title="Signal 2"></button>
+          <button class="pcb-pre" data-color="#ff8800" style="background:#ff8800" title="Warn"></button>
+          <button class="pcb-pre" data-color="#ffffff" style="background:#ffffff;border-color:#666" title="Weiß"></button>
+          <button class="pcb-pre" data-color="#aaaaaa" style="background:#aaaaaa" title="Grau"></button>
+          <button class="pcb-pre" data-color="#cc00ff" style="background:#cc00ff" title="Lila"></button>
+        </div>
+        <div class="pform-row">
+          <label>Breite</label>
+          <input type="number" id="lineWidth" min="1" max="100" value="2" class="num-input">
+        </div>
+        <div class="pform-row">
+          <label>Schrift&nbsp;pt</label>
+          <input type="number" id="fontSize" min="8" max="72" value="16" class="num-input">
+        </div>
+      </div>
+
+      <!-- Objekt-Eigenschaften (Zeichen-Tool aktiv oder Objekt ausgewählt) -->
+      <div class="props-section props-hidden" id="propsObj">
+        <div class="props-sep">Objekt</div>
+        <div class="pform-row">
+          <label>Rahmen</label>
+          <input type="color" id="propStroke">
+          <input type="number" id="propStrokeW" min="1" max="100" value="2" class="num-input">
+        </div>
+        <div class="pform-row">
+          <label>F&#252;llung</label>
+          <input type="color" id="propFill">
+          <label class="inline-label"><input type="checkbox" id="propFillNone"> kein</label>
+        </div>
+        <div class="pform-row">
+          <label>Start X</label>
+          <input type="number" id="propLeft" class="num-input" style="width:58px" step="0.1">
+          <span class="prop-coord-sep">Y</span>
+          <input type="number" id="propTop"  class="num-input" style="width:58px" step="0.1">
+          <span class="prop-coord-unit" id="propPosUnit">px</span>
+        </div>
+        <div class="pform-row">
+          <label>Ende X</label>
+          <input type="number" id="propEndX" class="num-input" style="width:58px" step="0.1">
+          <span class="prop-coord-sep">Y</span>
+          <input type="number" id="propEndY" class="num-input" style="width:58px" step="0.1">
+          <button class="aspect-lock-btn" id="aspectLockBtn" title="Proportionen sperren">&#128275;</button>
+          <span class="prop-coord-unit" id="propEndUnit">px</span>
+        </div>
+      </div>
+
+      <!-- Text-Eigenschaften (Text-Tool aktiv oder IText ausgewählt) -->
+      <div class="props-section props-hidden" id="propsText">
+        <div class="props-sep">Text</div>
+        <div class="pform-row pform-col">
+          <label>Inhalt</label>
+          <textarea id="propTextContent" rows="3"></textarea>
+        </div>
+        <div class="pform-row">
+          <label>Schrift</label>
+          <select id="propFontFamily">
+            <option value="monospace">Monospace</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Impact">Impact</option>
+          </select>
+        </div>
+        <div class="pform-row">
+          <label>Gr&#246;&#223;e</label>
+          <input type="number" id="propFontSize" min="6" max="300" value="16" class="num-input">
+          <label style="margin-left:8px">Farbe</label>
+          <input type="color" id="propTextColor">
+        </div>
+        <div class="prop-fmt-row">
+          <button class="prop-fmt-btn" id="propBold"        title="Fett"><b>B</b></button>
+          <button class="prop-fmt-btn" id="propItalic"      title="Kursiv"><i>I</i></button>
+          <button class="prop-fmt-btn" id="propUnderline"   title="Unterstrichen"><u>U</u></button>
+          <button class="prop-fmt-btn" id="propLinethrough" title="Durchgestrichen"><s>S</s></button>
+        </div>
+      </div>
+
+      <!-- Ausrichtung (nur bei Mehrfachauswahl) -->
+      <div class="props-section props-hidden" id="propsAlign">
+        <div class="props-sep">Ausrichten</div>
+        <div class="align-btns">
+          <button class="align-btn" data-align="left"       title="Links ausrichten">&#8874;</button>
+          <button class="align-btn" data-align="centerH"    title="Horizontal zentrieren">&#8597;</button>
+          <button class="align-btn" data-align="right"      title="Rechts ausrichten">&#8875;</button>
+          <button class="align-btn" data-align="top"        title="Oben ausrichten">&#8873;</button>
+          <button class="align-btn" data-align="centerV"    title="Vertikal zentrieren">&#8596;</button>
+          <button class="align-btn" data-align="bottom"     title="Unten ausrichten">&#8872;</button>
+          <button class="align-btn" data-align="distH"      title="Horizontal verteilen">&#8676;</button>
+          <button class="align-btn" data-align="distV"      title="Vertikal verteilen">&#8693;</button>
+        </div>
+      </div>
+
+      <!-- Bemaßungs-Override -->
+      <div class="props-section props-hidden" id="propsDim">
+        <div class="props-sep">Bema&#223;ung</div>
+        <div class="pform-row">
+          <label class="inline-label">
+            <input type="checkbox" id="propDimOverride"> Ma&#223;ung &#252;berschreiben
+          </label>
+        </div>
+        <div class="pform-row props-hidden" id="propDimLabelRow">
+          <label>Text</label>
+          <input type="text" id="propDimLabel" class="num-input" style="flex:1;width:auto">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Objekte / Ebenen -->
+  <div class="panel" data-panel="layers">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Objekte</span>
+      <button class="p-btn" id="newLayerBtn" title="Neue Ebene">&#9723;</button>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body layers-body">
+      <div id="layersList"></div>
+    </div>
+  </div>
+
+  <!-- Capture -->
+  <!-- KI Panel -->
+  <div class="panel" data-panel="ki">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">KI</span>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body" id="kiPanelBody">
+      <div id="kiPanelHint" style="padding:10px 8px;color:var(--clr-muted);font-size:11px;line-height:1.5">
+        KI nicht konfiguriert.<br>
+        <a id="kiOpenSettingsLink" href="#" style="color:var(--clr-accent)">Einstellungen &#8594; KI</a>
+      </div>
+      <div id="kiChat" style="display:none;flex-direction:column;height:100%">
+        <div id="kiModelBar"></div>
+
+
+        <div id="kiMessages"></div>
+        <div id="kiToolbar">
+          <button id="kiRegionBtn" title="Bereich auswählen">&#9974; Bereich</button>
+          <span id="kiRegionStatus"></span>
+          <button id="kiClearBtn" title="Chat leeren" style="margin-left:auto">&#128465;</button>
+        </div>
+        <div id="kiInputArea">
+          <textarea id="kiInput" placeholder="Aufgabe beschreiben&#8230;" rows="2"></textarea>
+          <button id="kiSendBtn" title="Senden (Enter)">&#11014;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="capture">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Capture</span>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body">
+      <label class="inline-label" style="margin-bottom:4px">
+        <input type="checkbox" id="captureWithObjs" checked>
+        Mit Annotationen
+      </label>
+      <div class="btn-col">
+        <button id="freezeBtn">&#10074;&#10074; Einfrieren</button>
+        <button id="snapshotBtn">&#128247; Snapshot</button>
+        <button id="snapToTabBtn">&#8599; Snap &amp; Neuer Tab</button>
+        <button id="recordBtn">&#9210; Aufnehmen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Panel -->
+  <div class="panel" data-panel="log">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Log</span>
+      <button class="p-btn" id="logClearBtn" title="Leeren" style="font-size:10px;padding:1px 5px">&#10005; Clear</button>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <div id="logList"></div>
+    </div>
+  </div>
+
+  <!-- Timeline Panel -->
+  <div class="panel" data-panel="timeline">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title">Timeline</span>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <div id="timelineList"></div>
+    </div>
+  </div>
+
+  <!-- Console Panel -->
+  <div class="panel" data-panel="console">
+    <div class="panel-header">
+      <span class="panel-grip">&#8942;&#8942;</span>
+      <span class="panel-title" style="font-family:monospace">&#62;_ Konsole</span>
+      <button class="p-btn" id="consoleClearBtn" title="Leeren" style="font-size:10px;padding:1px 5px">&#10005; Clear</button>
+      <button class="p-btn" id="consoleHelpBtn" title="Hilfe" style="font-size:10px;padding:1px 5px">? Help</button>
+      <button class="p-btn p-collapse" title="Ein-/Ausklappen">&#8722;</button>
+      <button class="p-btn p-close" title="Schlie&#223;en">&#10005;</button>
+    </div>
+    <div class="panel-body" style="padding:0;display:flex;flex-direction:column">
+      <div id="consoleOutput" style="flex:1;overflow-y:auto;font-family:monospace;font-size:12px;padding:6px 8px;min-height:120px;max-height:340px;background:var(--clr-bg,#111)"></div>
+      <div style="display:flex;align-items:center;border-top:1px solid var(--clr-border,#333);background:var(--clr-bg,#111);padding:4px 6px;gap:4px">
+        <span style="color:#1bc9e9;font-family:monospace;font-size:13px;user-select:none">&#62;</span>
+        <input id="consoleInput" type="text" placeholder="Befehl eingeben… (help)" autocomplete="off" spellcheck="false"
+          style="flex:1;background:transparent;border:none;outline:none;color:var(--clr-text,#eee);font-family:monospace;font-size:13px;caret-color:#1bc9e9">
+        <button id="consoleRunBtn" style="padding:2px 8px;border-radius:3px;border:1px solid var(--clr-border,#444);background:var(--clr-hover,#222);color:inherit;cursor:pointer;font-size:11px">&#9654;</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="loadJsonInput" accept=".json" style="display:none">
+
+  <!-- Datei-Manager Modal -->
+  <div id="fmOverlay">
+    <div id="fmDialog">
+      <div id="fmHeader">
+        <span id="fmTitle">Datei-Manager</span>
+        <button id="fmCloseBtn" class="fm-hdr-btn">&#10005;</button>
+      </div>
+      <div id="fmToolbar">
+        <button id="fmUpBtn" class="fm-tb-btn" title="Übergeordneter Ordner">&#8593; Hoch</button>
+        <div id="fmCrumb"></div>
+        <button id="fmMkdirBtn" class="fm-tb-btn" title="Neuer Ordner">&#128193;+</button>
+      </div>
+      <div id="fmBody">
+        <div id="fmItems"></div>
+        <div id="fmPreview">
+          <div id="fmPreviewInner">
+            <div id="fmPreviewImg"></div>
+            <div id="fmPreviewMeta"></div>
+          </div>
+        </div>
+      </div>
+      <div id="fmFooter">
+        <input id="fmNameInput" class="fm-name-input" placeholder="Dateiname&#8230;" spellcheck="false">
+        <div id="fmFooterBtns">
+          <button id="fmCancelBtn" class="fm-btn">Abbrechen</button>
+          <button id="fmOkBtn" class="fm-btn fm-btn-primary">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Versteckter Container für geschlossene Panels -->
+  <div id="panelHidden" style="display:none"></div>
+
+  <!-- Backdrop für Settings-Panel -->
+  <div id="spBackdrop"></div>
+
+  <!-- ── Settings page (Slide-In-Panel von rechts) ────────────────────────── -->
+  <div id="settingsPage" class="sp-hidden">
+    <div id="spHeader">
+      <h1>&#9881; Einstellungen</h1>
+      <button id="closeSettingsPage" title="Schließen">&#10005;</button>
+    </div>
+
+    <!-- Tab-Navigation -->
+    <div id="spNav">
+      <button class="sp-tab sp-tab-active" data-sp-tab="general">Allgemein</button>
+      <button class="sp-tab"               data-sp-tab="design">Design</button>
+      <button class="sp-tab"               data-sp-tab="ki">KI</button>
+      <button class="sp-tab"               data-sp-tab="shortcuts">Tastenkürzel</button>
+    </div>
+
+    <div id="spBody">
+
+      <!-- ══ Tab: Allgemein ══════════════════════════════════════════ -->
+      <div class="sp-tab-pane" id="spPaneGeneral">
+
+        <section class="sp-section">
+          <h2>Kamera</h2>
+          <div class="sp-row">
+            <label>Default Device</label>
+            <select id="deviceSelect"></select>
+          </div>
+          <div class="sp-row">
+            <label>Qualit&#228;t</label>
+            <input type="range" id="jpegQuality" min="30" max="100" value="70">
+            <span class="sp-val"><span id="qualityVal">70</span>%</span>
+          </div>
+          <div class="sp-row">
+            <label>Aufl&#246;sung</label>
+            <select id="streamScale">
+              <option value="0.25">25% &#8212; sehr schnell</option>
+              <option value="0.5" selected>50% &#8212; schnell</option>
+              <option value="0.75">75% &#8212; mittel</option>
+              <option value="1.0">100% &#8212; original</option>
+            </select>
+          </div>
+          <div class="sp-row">
+            <label>Max FPS</label>
+            <input type="range" id="maxFps" min="5" max="60" value="25">
+            <span class="sp-val" id="maxFpsVal">25</span>
+          </div>
+          <div class="sp-row">
+            <label><input type="checkbox" id="flipH"> Horizontal spiegeln</label>
+          </div>
+          <div class="sp-row">
+            <label><input type="checkbox" id="flipV"> Vertikal spiegeln</label>
+          </div>
+        </section>
+
+        <section class="sp-section">
+          <h2>Lineal &amp; Ma&#223;e</h2>
+          <div class="sp-row">
+            <label>Skalierung (px/mm)</label>
+            <input type="number" id="scalePxMm" min="0" step="0.1" placeholder="nicht gesetzt">
+          </div>
+          <div class="sp-row">
+            <label>Einheit</label>
+            <select id="rulerUnit">
+              <option value="px">px &#8212; Pixel</option>
+              <option value="mm">mm &#8212; Millimeter</option>
+              <option value="inch">inch &#8212; Zoll</option>
+              <option value="%">% &#8212; Prozent</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="sp-section">
+          <h2>Bearbeiten</h2>
+          <div class="sp-row">
+            <label>Pfeil-Schrittweite (px)</label>
+            <input type="number" id="arrowStep" min="0.1" max="100" step="0.5" value="1" style="width:70px">
+            <span style="font-size:11px;color:var(--clr-muted);margin-left:4px">Shift &#215;10</span>
+          </div>
+        </section>
+
+        <section class="sp-section">
+          <div class="sp-section-title">Aufnahmen</div>
+          <div class="sp-row" style="align-items:center;gap:6px;">
+            <label>Aufnahmepfad</label>
+            <span id="capturePathDisplay" style="flex:1;font-size:11px;color:var(--clr-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+            <button id="capturePathBrowse" class="btn-sm">Durchsuchen</button>
+            <button id="capturePathClear" class="btn-sm" title="Pfad löschen">✕</button>
+          </div>
+          <div style="font-size:10px;color:var(--clr-muted);padding:0 0 4px 0;">Snapshots und Videos werden direkt auf dem Server gespeichert. Leer = Browser-Download.</div>
+        </section>
+
+        <div id="spSaveRow">
+          <button id="saveSettingsBtn" class="btn-primary">&#10003;&nbsp;Speichern &amp; Schlie&#223;en</button>
+        </div>
+
+      </div><!-- /spPaneGeneral -->
+
+      <!-- ══ Tab: Design ════════════════════════════════════════════ -->
+      <div class="sp-tab-pane sp-hidden" id="spPaneDesign">
+
+        <section class="sp-section">
+          <h2>Vorlagen</h2>
+          <div class="design-preset-row" id="designPresets"></div>
+        </section>
+
+        <section class="sp-section">
+          <h2>Farben</h2>
+          <div class="design-var-grid" id="designColorVars"></div>
+        </section>
+
+        <section class="sp-section">
+          <h2>Leisten &amp; Schrift</h2>
+          <div class="design-var-grid" id="designSizeVars"></div>
+        </section>
+
+        <div class="design-actions">
+          <button id="designExportBtn">&#8595; Design exportieren</button>
+          <button id="designImportBtn">&#8593; Design importieren</button>
+          <button id="designResetBtn">&#8635; Zur&#252;cksetzen</button>
+        </div>
+        <input type="file" id="designImportFile" accept=".json" style="display:none">
+
+      </div><!-- /spPaneDesign -->
+
+      <!-- ══ Tab: KI ════════════════════════════════════════════════ -->
+      <div class="sp-tab-pane sp-hidden" id="spPaneKi">
+
+        <div class="sp-section">
+          <h2>Provider</h2>
+          <div class="sp-row">
+            <label>Voreinstellung</label>
+            <div class="ki-presets">
+              <button class="ki-preset-btn" data-provider="openai">OpenAI</button>
+              <button class="ki-preset-btn" data-provider="anthropic">Anthropic</button>
+              <button class="ki-preset-btn" data-provider="google">Google</button>
+              <button class="ki-preset-btn" data-provider="custom">Custom</button>
+            </div>
+          </div>
+          <div class="sp-row">
+            <label>Endpunkt-URL</label>
+            <input type="text" id="kiEndpoint" placeholder="https://api.openai.com/v1" style="flex:1">
+          </div>
+          <div class="sp-row">
+            <label>API Key</label>
+            <input type="password" id="kiApiKey" placeholder="sk-…" style="flex:1" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="sp-section">
+          <h2>Modell</h2>
+          <div class="sp-row">
+            <button id="kiLoadModelsBtn" class="ki-load-btn">Modelle laden &#8635;</button>
+            <span id="kiLoadStatus" style="font-size:11px;color:var(--clr-muted);margin-left:8px"></span>
+          </div>
+          <div class="sp-row">
+            <label>Aktives Modell</label>
+            <select id="kiModel" style="flex:1" disabled>
+              <option value="">– erst Modelle laden –</option>
+            </select>
+          </div>
+          <div class="sp-row">
+            <button id="kiTestBtn" class="ki-load-btn">Verbindung testen &#10003;</button>
+            <span id="kiTestStatus" style="font-size:11px;margin-left:8px"></span>
+          </div>
+        </div>
+
+        <div class="sp-section" id="kiThinkingSection">
+          <h2>Extended Thinking</h2>
+          <div class="sp-row">
+            <label>Aktivieren</label>
+            <label class="inline-label">
+              <input type="checkbox" id="kiThinkingEnabled">
+              Denk-Schritte anzeigen
+            </label>
+          </div>
+          <div class="sp-row">
+            <label>Budget</label>
+            <input type="number" id="kiThinkingBudget" min="1000" max="32000" step="1000" value="8000" style="width:90px">
+            <span style="font-size:11px;color:var(--clr-muted);margin-left:4px">Tokens</span>
+          </div>
+        </div>
+
+        <div class="sp-section">
+          <h2>Prompt-Vorlage</h2>
+          <div class="sp-row" style="font-size:11px;color:var(--clr-muted);margin-bottom:4px;display:block">
+            Wird als System-Prompt vor jeder Anfrage gesendet.<br>
+            <code style="font-size:10px;color:var(--clr-accent)">{{selection}}</code> = markierter Text &nbsp;
+            <code style="font-size:10px;color:var(--clr-accent)">{{image}}</code> = aktuelles Bild
+          </div>
+          <textarea id="kiTemplate" rows="5" placeholder="Du bist ein hilfreicher Assistent f&#252;r PCB-Analyse. Beantworte pr&#228;zise auf Deutsch."
+            style="width:100%;background:var(--clr-input);color:var(--clr-text);border:1px solid var(--clr-border);border-radius:4px;padding:8px;font-family:inherit;font-size:11px;resize:vertical;line-height:1.5"></textarea>
+        </div>
+
+        <div class="sp-row" style="padding-top:4px">
+          <button id="kiSaveBtn" class="btn-primary" style="flex:1">Speichern</button>
+        </div>
+
+        <div class="sp-section">
+          <h2>Berechtigungen</h2>
+          <div id="kiPermsBody" style="display:flex;flex-direction:column;gap:4px">
+            <label><input type="checkbox" data-perm="create"> Objekte erstellen</label>
+            <label><input type="checkbox" data-perm="delete"> Objekte löschen</label>
+            <label><input type="checkbox" data-perm="move"> Objekte verschieben</label>
+            <label><input type="checkbox" data-perm="setProps"> Eigenschaften ändern</label>
+            <label><input type="checkbox" data-perm="rename"> Umbenennen</label>
+            <label><input type="checkbox" data-perm="link"> Verknüpfen/Entkoppeln</label>
+            <label><input type="checkbox" data-perm="layers"> Ebenen verwalten</label>
+            <label><input type="checkbox" data-perm="select"> Auswahl ändern</label>
+            <label><input type="checkbox" data-perm="guides"> Hilfslinien</label>
+          </div>
+        </div>
+
+      </div><!-- /spPaneKI -->
+
+      <!-- ══ Tab: Tastenkürzel ══════════════════════════════════════ -->
+      <div class="sp-tab-pane sp-hidden" id="spPaneShortcuts">
+        <section class="sp-section">
+          <h2>Tastenkürzel</h2>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+            <button id="scResetAllBtn" class="fm-btn">Alle zurücksetzen</button>
+          </div>
+          <div id="scList"></div>
+        </section>
+      </div><!-- /spPaneShortcuts -->
+
+    </div>
+  </div>
+
+  <!-- ══ Mobile UI ════════════════════════════════════════════════════════════ -->
+
+  <!-- Obere Leiste (Mobile) -->
+  <div id="mobTopBar">
+    <span id="mobTitle">ScopeCam</span>
+    <div id="mobTopRight">
+      <button class="mob-top-btn" id="mobUndoBtn" title="R&#252;ckg&#228;ngig">&#8617;</button>
+      <button class="mob-top-btn" id="mobRedoBtn" title="Wiederholen">&#8618;</button>
+      <button class="mob-top-btn" id="mobKiBtn"   title="KI Chat">&#129302;</button>
+      <button class="mob-top-btn" id="mobSaveBtn" title="Speichern">&#128190;</button>
+      <button class="mob-top-btn" id="mobMenuBtn" title="Men&#252;">&#9776;</button>
+    </div>
+  </div>
+
+  <!-- Werkzeug-Leiste unten (Mobile) -->
+  <div id="mobToolBar">
+    <button class="mob-tool" data-tool="select"    title="Auswahl">&#9654;</button>
+    <button class="mob-tool" data-tool="line"      title="Linie">&#9585;</button>
+    <button class="mob-tool" data-tool="arrow"     title="Pfeil">&#8594;</button>
+    <button class="mob-tool" data-tool="dimension" title="Bema&#223;ung">&#8596;</button>
+    <button class="mob-tool" data-tool="rect"      title="Rechteck">&#9645;</button>
+    <button class="mob-tool" data-tool="circle"    title="Kreis">&#9675;</button>
+    <button class="mob-tool" data-tool="text"      title="Text">T</button>
+    <button class="mob-tool" data-tool="freehand"  title="Freihand">&#9999;</button>
+    <button class="mob-tool" data-tool="hand"      title="Verschieben">&#9995;</button>
+  </div>
+
+  <!-- Action-Sheet Hintergrund -->
+  <div id="mobSheetBg"></div>
+
+  <!-- Action-Sheet (slide-up) -->
+  <div id="mobSheet">
+    <div id="mobSheetHandle"></div>
+
+    <div class="mob-section">
+      <div class="mob-sec-title">Datei</div>
+      <div class="mob-grid">
+        <button class="mob-grid-btn" id="mob_save">&#128190; Speichern</button>
+        <button class="mob-grid-btn" id="mob_saveAs">&#128193; Sp. unter</button>
+        <button class="mob-grid-btn" id="mob_open">&#128194; &#214;ffnen</button>
+        <button class="mob-grid-btn" id="mob_export">&#128247; PNG Export</button>
+        <button class="mob-grid-btn" id="mob_fm">&#128203; File Manager</button>
+      </div>
+    </div>
+
+    <div class="mob-sep"></div>
+
+    <div class="mob-section">
+      <div class="mob-sec-title">Bearbeiten</div>
+      <div class="mob-grid">
+        <button class="mob-grid-btn" id="mob_undo">&#8617; R&#252;ckg&#228;ngig</button>
+        <button class="mob-grid-btn" id="mob_redo">&#8618; Wiederholen</button>
+        <button class="mob-grid-btn" id="mob_delete">&#128465; L&#246;schen</button>
+        <button class="mob-grid-btn" id="mob_clearAll">&#10005; Alle l&#246;schen</button>
+      </div>
+    </div>
+
+    <div class="mob-sep"></div>
+
+    <div class="mob-section">
+      <div class="mob-grid">
+        <button class="mob-grid-btn" id="mob_ki">&#129302; KI Chat</button>
+        <button class="mob-grid-btn" id="mob_timeline">&#128337; Timeline</button>
+        <button class="mob-grid-btn" id="mob_settings">&#9881; Einstellungen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schnellmess-Overlay -->
+  <div id="measureOverlay" style="display:none;position:fixed;z-index:8000;background:rgba(0,0,0,.75);color:#fff;font-size:13px;padding:5px 10px;border-radius:6px;pointer-events:none;font-family:monospace"></div>
+
+  <!-- Snap-Feedback-Canvas (über allem) -->
+  <canvas id="snapFeedbackCanvas" style="position:absolute;inset:0;z-index:25;pointer-events:none;display:block"></canvas>
+
+  <!-- Batch-Rename-Modal -->
+  <div id="batchRenameModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+    <div style="background:var(--clr-surface,#1e1e1e);border:1px solid var(--clr-border,#444);border-radius:8px;padding:20px;min-width:300px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:10px">Batch-Umbenennen</div>
+      <div style="font-size:12px;color:var(--clr-txt-dim,#aaa);margin-bottom:10px"><b>%d</b> = Zahl (1,2,3…) &nbsp; <b>%D</b> = Buchstabe (A,B,C…) &nbsp; <b>%n</b> = alter Name</div>
+      <input id="batchRenamePattern" type="text" placeholder="z.B. R%d oder C%d-%n" style="width:100%;box-sizing:border-box;padding:6px 8px;background:var(--clr-input,#2a2a2a);border:1px solid var(--clr-border,#444);border-radius:4px;color:inherit;font-size:13px;margin-bottom:12px">
+      <div id="batchRenamePreview" style="font-size:11px;color:var(--clr-txt-dim,#aaa);margin-bottom:12px;min-height:16px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="batchRenameCancelBtn" style="padding:4px 12px;border-radius:4px;border:1px solid var(--clr-border,#444);background:transparent;color:inherit;cursor:pointer">Abbrechen</button>
+        <button id="batchRenameOkBtn" style="padding:4px 12px;border-radius:4px;border:none;background:var(--clr-accent,#1bc9e9);color:#000;cursor:pointer">Umbenennen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Komponenten-Bibliothek-Modal -->
+  <div id="compLibModal" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+    <div style="background:var(--clr-surface,#1e1e1e);border:1px solid var(--clr-border,#444);border-radius:8px;padding:20px;min-width:320px;max-width:420px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:12px">Komponent-Bibliothek</div>
+      <div id="compLibList" style="max-height:220px;overflow-y:auto;margin-bottom:12px;border:1px solid var(--clr-border,#333);border-radius:4px;min-height:40px"></div>
+      <input id="compLibName" type="text" placeholder="Name f&#252;r aktuelle Auswahl…" style="width:100%;box-sizing:border-box;padding:6px 8px;background:var(--clr-input,#2a2a2a);border:1px solid var(--clr-border,#444);border-radius:4px;color:inherit;font-size:13px;margin-bottom:8px">
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="compLibCloseBtn" style="padding:4px 12px;border-radius:4px;border:1px solid var(--clr-border,#444);background:transparent;color:inherit;cursor:pointer">Schlie&#223;en</button>
+        <button id="compLibSaveBtn" style="padding:4px 12px;border-radius:4px;border:none;background:var(--clr-accent,#1bc9e9);color:#000;cursor:pointer">Auswahl speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kalibrierungs-Modal -->
+  <div id="calibrateModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center">
+    <div style="background:var(--clr-surface,#1e1e1e);border:1px solid var(--clr-border,#444);border-radius:8px;padding:20px;min-width:280px;max-width:360px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:12px">Kalibrierung</div>
+      <div style="font-size:13px;color:var(--clr-txt-dim,#aaa);margin-bottom:12px" id="calibrateHint">Ziehe eine Linie über eine bekannte Strecke auf dem Canvas.</div>
+      <div id="calibrateInputRow" style="display:none;margin-bottom:12px">
+        <div style="font-size:12px;margin-bottom:6px">Gemessene Strecke: <b id="calibratePx">— px</b></div>
+        <label style="font-size:12px">Echte L&#228;nge (mm):</label>
+        <input type="number" id="calibrateMm" min="0.1" step="0.1" style="margin-left:6px;width:80px;padding:3px 6px;background:var(--clr-input,#2a2a2a);border:1px solid var(--clr-border,#444);border-radius:4px;color:inherit">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="calibrateCancelBtn" style="padding:4px 12px;border-radius:4px;border:1px solid var(--clr-border,#444);background:transparent;color:inherit;cursor:pointer">Abbrechen</button>
+        <button id="calibrateOkBtn" style="padding:4px 12px;border-radius:4px;border:none;background:var(--clr-accent,#1bc9e9);color:#000;cursor:pointer;display:none">Kalibrieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- app.js split into modules (see static/modules/) -->
+  <script src="modules/01-server-settings.js"></script>
+  <script src="modules/02-panels.js"></script>
+  <script src="modules/03-status-log.js"></script>
+  <script src="modules/04-canvas-state.js"></script>
+  <script src="modules/05-video.js"></script>
+  <script src="modules/06-transform.js"></script>
+  <script src="modules/07-canvas-layout.js"></script>
+  <script src="modules/08-tabs.js"></script>
+  <script src="modules/09-tools.js"></script>
+  <script src="modules/10-mouse-events.js"></script>
+  <script src="modules/11-draw-helpers.js"></script>
+  <script src="modules/12-props-panel.js"></script>
+  <script src="modules/13-layers.js"></script>
+  <script src="modules/14-history.js"></script>
+  <script src="modules/15-capture.js"></script>
+  <script src="modules/16-file-ops.js"></script>
+  <script src="modules/17-shortcuts.js"></script>
+  <script src="modules/18-keyboard.js"></script>
+  <script src="modules/19-file-manager.js"></script>
+  <script src="modules/20-design.js"></script>
+  <script src="modules/21-settings-ui.js"></script>
+  <script src="modules/22-rulers.js"></script>
+  <script src="modules/23-grid.js"></script>
+  <script src="modules/24-guides.js"></script>
+  <script src="modules/25-pcb-snap.js"></script>
+  <script src="modules/26-ki-settings.js"></script>
+  <script src="modules/27-ki-core.js"></script>
+  <script src="modules/28-tools-extra.js"></script>
+  <script src="modules/29-feature-batch2.js"></script>
+  <script src="modules/30-ki-chat-ui.js"></script>
+  <script src="modules/31-console-panel.js"></script>
+  <script src="modules/32-init.js"></script>
+  <script src="modules/33-mobile.js"></script>
+</body>
+</html>
