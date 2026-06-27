@@ -8,6 +8,7 @@ import signal
 import subprocess
 import threading
 import time
+from contextlib import asynccontextmanager
 
 import cv2
 import numpy as np
@@ -16,7 +17,17 @@ from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocket
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-app = FastAPI(title="ScopeCam")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    s = load_settings()
+    if s["device"] != "demo":
+        cam.start(s["device"], s["stream_scale"], s["max_fps"],
+                  s["jpeg_quality"], s["flip_h"], s["flip_v"])
+    yield
+
+
+app = FastAPI(title="ScopeCam", lifespan=lifespan)
 
 DATA_DIR = "/app/data"
 SETTINGS_FILE = f"{DATA_DIR}/settings.json"
@@ -288,12 +299,6 @@ class Camera:
 cam = Camera()
 
 
-@app.on_event("startup")
-def startup():
-    s = load_settings()
-    if s["device"] != "demo":
-        cam.start(s["device"], s["stream_scale"], s["max_fps"],
-                  s["jpeg_quality"], s["flip_h"], s["flip_v"])
 
 
 @app.websocket("/ws/stream")

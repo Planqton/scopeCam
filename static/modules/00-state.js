@@ -17,6 +17,57 @@
 //   KI_PERM_DEFAULTS   — Konstante
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * @typedef {Object} AppState
+ * @property {fabric.Canvas|null} canvas
+ * @property {Object} settings
+ * @property {string|null} currentTool
+ * @property {Array<{json:string,label:string,time:number}>} history
+ * @property {number} historyIdx
+ * @property {string|null} _nextLabel
+ * @property {HTMLCanvasElement|null} videoCanvas
+ * @property {CanvasRenderingContext2D|null} videoCtx
+ * @property {Object} panelStates
+ * @property {Object} panelElCache
+ * @property {number} zoomLevel
+ * @property {number} panX
+ * @property {number} panY
+ * @property {boolean} isPanning
+ * @property {Array} tabs
+ * @property {string|null} activeTabId
+ * @property {Array} layers
+ * @property {boolean} _kiBatchMode
+ * @property {string|null} currentSavePath
+ * @property {Object} SC
+ * @property {string|null} axisLock
+ * @property {boolean} _snapSkipActive
+ * @property {Object} gridState
+ * @property {boolean} _aspectLocked
+ * @property {{h:number[],v:number[]}} guideLines
+ * @property {boolean} guidesVisible
+ * @property {boolean} guidesSnap
+ * @property {{axis:string,idx:number}|null} selectedGuide
+ * @property {boolean} _guidesCollapsed
+ * @property {boolean} pcbLiveSnapEnabled
+ * @property {Object} kiSettings
+ * @property {Array} kiChatHistory
+ * @property {Object} kiPerms
+ * @property {Object|null} _clipboard
+ * @property {boolean} _snapToObjEnabled
+ * @property {Array} _polyPts
+ * @property {fabric.Line|null} _polyPreviewLine
+ * @property {string|null} _polyLinkId
+ * @property {Object|null} _calPts
+ * @property {boolean} _streamFrozen
+ * @property {Object|null} _measurePt1
+ * @property {HTMLElement|null} _measureOverlay
+ * @property {Object|null} _calloutAnchor
+ * @property {fabric.Line|null} _calloutPreviewLine
+ * @property {Object|null} kiRegionRect
+ * @property {boolean} _suppressLinkExpand
+ */
+
+/** @type {AppState} */
 const S = {
 
   // ── Canvas & Core State (04-canvas-state.js) ────────────────────────────────
