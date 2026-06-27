@@ -20,19 +20,19 @@ async function init() {
   _renderStatusKeys();
 
   const res = await fetch('/api/settings');
-  settings  = await res.json();
+  S.settings  = await res.json();
   updateScaleStatus();
 
   // Tabs aus localStorage laden oder Ersttab erstellen
   if (!loadTabsFromStorage()) {
     const defaultTab = createTab('Kamera');
-    activeTabId      = defaultTab.id;
+    S.activeTabId      = defaultTab.id;
     saveTabs();
   }
   renderTabBar();
 
   // Aktiven Tab wiederherstellen
-  const tab = tabById(activeTabId);
+  const tab = tabById(S.activeTabId);
   loadLayersFromTab(tab);
   if (tab) {
     if (tab.backgroundDataUrl && tab.backgroundDataUrl !== '[gespeichert]') {
@@ -62,8 +62,8 @@ async function init() {
 
   // KI-Bereich wiederherstellen (nach syncCanvasSize damit Wrapper-Größe bekannt ist)
   restoreKiRegion();
-  if (kiRegionRect) {
-    const { rw, rh } = kiRegionRect;
+  if (S.kiRegionRect) {
+    const { rw, rh } = S.kiRegionRect;
     document.getElementById('kiRegionStatus').textContent = `⊡ ${Math.round(rw)}×${Math.round(rh)}px (live)`;
     const msgs = document.getElementById('kiMessages');
     if (msgs) { msgs.appendChild(createRegionBadge(rw, rh)); msgs.scrollTop = msgs.scrollHeight; }

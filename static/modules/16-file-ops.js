@@ -3,41 +3,41 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 document.getElementById('linkBtn').addEventListener('click', () => {
-  if (canvas.getActiveObjects().length < 2) return;
+  if (S.canvas.getActiveObjects().length < 2) return;
   linkSelectedObjects();
 });
 
 document.getElementById('unlinkBtn').addEventListener('click', () => {
-  const grouped = canvas.getActiveObjects().filter(o => o.linkGroup);
+  const grouped = S.canvas.getActiveObjects().filter(o => o.linkGroup);
   if (!grouped.length) return;
   const ids = new Set(grouped.map(o => o.linkGroup));
   ids.forEach(id => unlinkObjects(getLinkGroupMembers(id)));
 });
 
 document.getElementById('deleteBtn').addEventListener('click', () => {
-  const active = canvas.getActiveObjects();
+  const active = S.canvas.getActiveObjects();
   if (!active.length) return;
   const n = active.length;
-  active.forEach(o => canvas.remove(o));
-  canvas.discardActiveObject();
-  _nextLabel = n > 1 ? `${n} gelöscht` : 'Gelöscht';
+  active.forEach(o => S.canvas.remove(o));
+  S.canvas.discardActiveObject();
+  S._nextLabel = n > 1 ? `${n} gelöscht` : 'Gelöscht';
   saveHistory();
-  canvas.renderAll();
+  S.canvas.renderAll();
   refreshLayersList();
   setStatus(`🗑 ${n} Objekt${n > 1 ? 'e' : ''} gelöscht`);
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
   if (!confirm('Alle Annotationen löschen?')) return;
-  canvas.clear();
-  _nextLabel = 'Alle gelöscht';
+  S.canvas.clear();
+  S._nextLabel = 'Alle gelöscht';
   saveHistory();
   refreshLayersList();
   setStatus('🗑 Alle Annotationen gelöscht');
 });
 
 document.getElementById('saveJsonBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(canvas.toJSON(CUSTOM_PROPS), null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(S.canvas.toJSON(CUSTOM_PROPS), null, 2)], { type: 'application/json' });
   const a    = document.createElement('a');
   a.href     = URL.createObjectURL(blob);
   const fn   = `scopecam_${timestamp()}.json`;
@@ -56,8 +56,8 @@ document.getElementById('loadJsonInput').addEventListener('change', function () 
   const reader   = new FileReader();
   reader.onload  = e => {
     try {
-      canvas.loadFromJSON(JSON.parse(e.target.result), () => {
-        canvas.renderAll();
+      S.canvas.loadFromJSON(JSON.parse(e.target.result), () => {
+        S.canvas.renderAll();
         saveHistory();
         refreshLayersList();
       });
@@ -175,9 +175,9 @@ async function _buildProjectBytes() {
 
   // Frame ohne Annotationen (JPEG, niedrigere Qualität → kompakt)
   const frameOnly = document.createElement('canvas');
-  frameOnly.width = videoCanvas.width || videoCanvas.offsetWidth;
-  frameOnly.height = videoCanvas.height || videoCanvas.offsetHeight;
-  try { frameOnly.getContext('2d').drawImage(videoCanvas, 0, 0, frameOnly.width, frameOnly.height); } catch(_){}
+  frameOnly.width = S.videoCanvas.width || S.videoCanvas.offsetWidth;
+  frameOnly.height = S.videoCanvas.height || S.videoCanvas.offsetHeight;
+  try { frameOnly.getContext('2d').drawImage(S.videoCanvas, 0, 0, frameOnly.width, frameOnly.height); } catch(_){}
   const frameB64 = frameOnly.width ? frameOnly.toDataURL('image/jpeg', 0.78) : null;
 
   // 2. PNG-Bytes des Composite holen
@@ -190,11 +190,11 @@ async function _buildProjectBytes() {
     type: 'scopecam-project',
     timestamp: new Date().toISOString(),
     frame: frameB64,
-    canvasJSON: canvas.toJSON(CUSTOM_PROPS),
-    layers: JSON.parse(JSON.stringify(layers)),
-    guides: JSON.parse(JSON.stringify(guideLines)),
-    history: history.map(e => ({ label: e.label, time: e.time, json: e.json })),
-    historyIdx,
+    canvasJSON: S.canvas.toJSON(CUSTOM_PROPS),
+    layers: JSON.parse(JSON.stringify(S.layers)),
+    guides: JSON.parse(JSON.stringify(S.guideLines)),
+    history: S.history.map(e => ({ label: e.label, time: e.time, json: e.json })),
+    historyIdx: S.historyIdx,
   });
   pngBytes = _pngInjectITXt(pngBytes, 'ScopeCam', meta);
 
@@ -202,18 +202,18 @@ async function _buildProjectBytes() {
 }
 
 // Speicherpfad pro Tab verwalten
-let currentSavePath = null;
-let _savedHistoryIdx = -1;  // historyIdx zum Zeitpunkt des letzten Speicherns
+S.currentSavePath = null;
+let _savedHistoryIdx = -1;  // S.historyIdx zum Zeitpunkt des letzten Speicherns
 
 function _markSaved() {
-  _savedHistoryIdx = historyIdx;
-  const tab = tabById(activeTabId);
-  if (tab) tab._savedHistoryIdx = historyIdx;
+  _savedHistoryIdx = S.historyIdx;
+  const tab = tabById(S.activeTabId);
+  if (tab) tab._savedHistoryIdx = S.historyIdx;
   _updateDirtyIndicator();
 }
 
 function _isDirty() {
-  return historyIdx !== _savedHistoryIdx;
+  return S.historyIdx !== _savedHistoryIdx;
 }
 
 function _updateDirtyIndicator() {
@@ -221,7 +221,7 @@ function _updateDirtyIndicator() {
     const tid = el.dataset.tabId;
     const tab = tabById(tid);
     if (!tab) return;
-    const dirty = (tid === activeTabId)
+    const dirty = (tid === S.activeTabId)
       ? _isDirty()
       : (tab.historyIdx !== (tab._savedHistoryIdx ?? -1) && tab.history?.length > 0);
     let dot = el.querySelector('.tab-dirty');
@@ -238,17 +238,17 @@ function _updateDirtyIndicator() {
 }
 
 function _setSavePath(path) {
-  currentSavePath = path || null;
-  const tab = tabById(activeTabId);
+  S.currentSavePath = path || null;
+  const tab = tabById(S.activeTabId);
   if (tab) tab.savePath = path || null;
   _updateSaveBtn();
 }
 
 function _updateSaveBtn() {
   const btn = document.getElementById('saveProjectBtn');
-  if (currentSavePath) {
+  if (S.currentSavePath) {
     btn.classList.remove('menu-item-dimmed');
-    btn.title = currentSavePath;
+    btn.title = S.currentSavePath;
   } else {
     btn.classList.add('menu-item-dimmed');
     btn.title = 'Noch nicht gespeichert — öffnet Speichern-Dialog';
@@ -258,13 +258,13 @@ function _updateSaveBtn() {
 async function saveProject() {
   const pngBytes = await _buildProjectBytes();
   if (!pngBytes) return;
-  if (currentSavePath) {
-    await fetch('/api/files/write?path=' + encodeURIComponent(currentSavePath), {
+  if (S.currentSavePath) {
+    await fetch('/api/files/write?path=' + encodeURIComponent(S.currentSavePath), {
       method: 'POST', body: pngBytes,
       headers: { 'Content-Type': 'application/octet-stream' },
     });
-    const fname = currentSavePath.split('/').pop();
-    setStatus(`✓ ${fname} gespeichert nach ${currentSavePath.includes('/') ? currentSavePath.substring(0, currentSavePath.lastIndexOf('/')) : '/'}`);
+    const fname = S.currentSavePath.split('/').pop();
+    setStatus(`✓ ${fname} gespeichert nach ${S.currentSavePath.includes('/') ? S.currentSavePath.substring(0, S.currentSavePath.lastIndexOf('/')) : '/'}`);
     _markSaved();
   } else {
     await openFileManager('save', pngBytes, `projekt_${timestamp()}.scopecam`);
@@ -274,22 +274,22 @@ async function saveProject() {
 async function saveProjectAs() {
   const pngBytes = await _buildProjectBytes();
   if (!pngBytes) return;
-  await openFileManager('save', pngBytes, currentSavePath ? currentSavePath.split('/').pop() : `projekt_${timestamp()}.scopecam`);
+  await openFileManager('save', pngBytes, S.currentSavePath ? S.currentSavePath.split('/').pop() : `projekt_${timestamp()}.scopecam`);
 }
 
 // ── Laden (ArrayBuffer) ───────────────────────────────────────────────────────
 function _applyProjectData(p) {
   if (p.canvasJSON) {
-    canvas.loadFromJSON(p.canvasJSON, () => {
-      canvas.renderAll();
-      if (p.layers) { layers = JSON.parse(JSON.stringify(p.layers)); saveCurrentTabLayers(); }
-      if (p.guides) { guideLines = p.guides; saveGuides(); drawGuides(); }
+    S.canvas.loadFromJSON(p.canvasJSON, () => {
+      S.canvas.renderAll();
+      if (p.layers) { S.layers = JSON.parse(JSON.stringify(p.layers)); saveCurrentTabLayers(); }
+      if (p.guides) { S.guideLines = p.guides; saveGuides(); drawGuides(); }
       saveHistory();
       refreshLayersList();
     });
   } else {
-    if (p.layers) { layers = JSON.parse(JSON.stringify(p.layers)); saveCurrentTabLayers(); }
-    if (p.guides) { guideLines = p.guides; saveGuides(); drawGuides(); }
+    if (p.layers) { S.layers = JSON.parse(JSON.stringify(p.layers)); saveCurrentTabLayers(); }
+    if (p.guides) { S.guideLines = p.guides; saveGuides(); drawGuides(); }
     refreshLayersList();
   }
 }
@@ -308,10 +308,10 @@ function loadProject(buf, serverPath) {
       switchToTab(newTab.id);
       _applyProjectData(p);
       if (p.history && p.history.length > 0) {
-        history    = p.history;
-        historyIdx = p.historyIdx ?? history.length - 1;
-        const tab2 = tabById(activeTabId);
-        if (tab2) { tab2.history = history; tab2.historyIdx = historyIdx; }
+        S.history    = p.history;
+        S.historyIdx = p.historyIdx ?? S.history.length - 1;
+        const tab2 = tabById(S.activeTabId);
+        if (tab2) { tab2.history = S.history; tab2.historyIdx = S.historyIdx; }
         refreshTimeline();
       }
       if (serverPath) _setSavePath(serverPath);

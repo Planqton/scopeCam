@@ -2,45 +2,45 @@
 // KI CHAT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let kiChatHistory = []; // {role:'user'|'assistant', content:''}
+S.kiChatHistory = []; // {role:'user'|'assistant', content:''}
 
 const KI_CHAT_KEY = 'scopecam_ki_chat_v1';
 
 function saveKiChat() {
-  try { localStorage.setItem(KI_CHAT_KEY, JSON.stringify(kiChatHistory)); } catch (_) {}
+  try { localStorage.setItem(KI_CHAT_KEY, JSON.stringify(S.kiChatHistory)); } catch (_) {}
 }
 
 // ── KI Berechtigungen ────────────────────────────────────────────────────────
 const KI_PERMS_KEY = 'scopecam_ki_perms_v1';
 const KI_PERM_DEFAULTS = { create: true, delete: true, move: true, setProps: true, rename: true, link: true, layers: true, select: true, guides: true };
-let kiPerms = { ...KI_PERM_DEFAULTS };
+S.kiPerms = { ...KI_PERM_DEFAULTS };
 
 function loadKiPerms() {
   try {
     const s = JSON.parse(localStorage.getItem(KI_PERMS_KEY));
-    if (s) kiPerms = { ...KI_PERM_DEFAULTS, ...s };
+    if (s) S.kiPerms = { ...KI_PERM_DEFAULTS, ...s };
   } catch (_) {}
   document.querySelectorAll('#kiPermsBody [data-perm]').forEach(cb => {
-    cb.checked = !!kiPerms[cb.dataset.perm];
+    cb.checked = !!S.kiPerms[cb.dataset.perm];
     cb.addEventListener('change', () => {
-      kiPerms[cb.dataset.perm] = cb.checked;
-      try { localStorage.setItem(KI_PERMS_KEY, JSON.stringify(kiPerms)); } catch (_) {}
+      S.kiPerms[cb.dataset.perm] = cb.checked;
+      try { localStorage.setItem(KI_PERMS_KEY, JSON.stringify(S.kiPerms)); } catch (_) {}
     });
   });
 }
 
 function kiPermAllowed(action) {
-  if (action === 'createLayer' || action === 'moveToLayer' || action === 'renameLayer') return !!kiPerms.layers;
-  if (action === 'unlink') return !!kiPerms.link;
-  if (action === 'addGuide' || action === 'moveGuide' || action === 'removeGuide' || action === 'clearGuides') return !!kiPerms.guides;
-  return !!kiPerms[action];
+  if (action === 'createLayer' || action === 'moveToLayer' || action === 'renameLayer') return !!S.kiPerms.layers;
+  if (action === 'unlink') return !!S.kiPerms.link;
+  if (action === 'addGuide' || action === 'moveGuide' || action === 'removeGuide' || action === 'clearGuides') return !!S.kiPerms.guides;
+  return !!S.kiPerms[action];
 }
 
 function loadKiChat() {
   try {
     const saved = JSON.parse(localStorage.getItem(KI_CHAT_KEY));
     if (Array.isArray(saved)) {
-      kiChatHistory = saved;
+      S.kiChatHistory = saved;
       const el = document.getElementById('kiMessages');
       if (el) saved.forEach(m => kiAppendMessage(m.role, m.display ?? m.content, m.actions ?? null));
     }
@@ -49,7 +49,7 @@ function loadKiChat() {
 
 function getCanvasStateForAI() {
   return {
-    objects: canvas.getObjects().map(obj => ({
+    objects: S.canvas.getObjects().map(obj => ({
       id:          obj.objId,
       type:        obj.isDimension ? 'dimension' : obj.type,
       name:        obj.customName || '',
@@ -68,22 +68,22 @@ function getCanvasStateForAI() {
       linkGroup:   obj.linkGroup || null,
       dimLabel:    obj.isDimension ? (obj.dimLabelOverride || getDimAutoLabel(obj.dimPx || 0)) : null,
     })),
-    layers:      layers.map(l => ({ id: l.id, name: l.name, visible: l.visible })),
-    selectedIds: canvas.getActiveObjects().map(o => o.objId).filter(Boolean),
-    canvasSize:  { w: canvas.width, h: canvas.height },
+    layers:      S.layers.map(l => ({ id: l.id, name: l.name, visible: l.visible })),
+    selectedIds: S.canvas.getActiveObjects().map(o => o.objId).filter(Boolean),
+    canvasSize:  { w: S.canvas.width, h: S.canvas.height },
   };
 }
 
 function buildKiSystemPrompt() {
-  const base = kiSettings.template ||
+  const base = S.kiSettings.template ||
     'Du bist ein KI-Assistent für PCB-Annotation. Antworte präzise auf Deutsch.';
   const state  = JSON.stringify(getCanvasStateForAI(), null, 2);
   const region = getKiRegionInCanvasCoords();
 
   // Bilddimensionen ermitteln (was die KI tatsächlich sieht)
   const videoCanvas = document.getElementById('videoCanvas');
-  const imgW = region ? region.w : (videoCanvas.width  || canvas.width);
-  const imgH = region ? region.h : (videoCanvas.height || canvas.height);
+  const imgW = region ? region.w : (videoCanvas.width  || S.canvas.width);
+  const imgH = region ? region.h : (videoCanvas.height || S.canvas.height);
 
   const regionNote = region
     ? `\n## Aktiver Bildausschnitt (KRITISCH für Koordinaten!)
@@ -97,8 +97,8 @@ Das mitgesendete Bild ist ${imgW}×${imgH}px und zeigt den gesamten Canvas.
 Bildkoordinaten = Canvas-Koordinaten direkt.\n`;
 
   const permLabels = { create:'Objekte erstellen', delete:'Objekte löschen', move:'Verschieben', setProps:'Eigenschaften ändern', rename:'Umbenennen', link:'Verknüpfen', layers:'Ebenen', select:'Auswahl', guides:'Hilfslinien' };
-  const allowed  = Object.entries(kiPerms).filter(([,v])=>v).map(([k])=>permLabels[k]||k).join(', ');
-  const blocked  = Object.entries(kiPerms).filter(([,v])=>!v).map(([k])=>permLabels[k]||k).join(', ');
+  const allowed  = Object.entries(S.kiPerms).filter(([,v])=>v).map(([k])=>permLabels[k]||k).join(', ');
+  const blocked  = Object.entries(S.kiPerms).filter(([,v])=>!v).map(([k])=>permLabels[k]||k).join(', ');
   const permNote = `\n## Berechtigungen\nErlaubt: ${allowed||'keine'}${blocked ? `\nNICHT erlaubt (diese Aktionen NICHT verwenden): ${blocked}` : ''}\n`;
 
   return `${base}
@@ -146,7 +146,7 @@ Antworte IMMER mit genau einem JSON-Block:
 \`{"action":"select","ids":["<id1>"]}\`
 
 ## Hilfslinien
-Aktuelle Hilfslinien: H=${JSON.stringify(guideLines.h)} V=${JSON.stringify(guideLines.v)}
+Aktuelle Hilfslinien: H=${JSON.stringify(S.guideLines.h)} V=${JSON.stringify(S.guideLines.v)}
 axis muss IMMER "h" (horizontal, y-Position) oder "v" (vertikal, x-Position) sein — NIEMALS "x" oder "y".
 \`{"action":"addGuide","axis":"h","pos":200}\` — horizontale Linie bei y=200 (quer über das Bild)
 \`{"action":"addGuide","axis":"v","pos":350}\` — vertikale Linie bei x=350 (senkrecht über das Bild)
@@ -175,9 +175,9 @@ Beispiel für eine L-förmige Leiterbahn:
 }
 
 async function callKiLLM(messages) {
-  const { endpoint, apiKey } = kiSettings;
+  const { endpoint, apiKey } = S.kiSettings;
   // Strip "models/" prefix that Google's model list adds
-  const model = kiSettings.model.replace(/^models\//, '');
+  const model = S.kiSettings.model.replace(/^models\//, '');
   if (!endpoint || !model) throw new Error('KI nicht konfiguriert');
   const prov   = detectKiProvider(endpoint);
   const config = KI_PROVIDERS[prov];
@@ -189,14 +189,14 @@ async function callKiLLM(messages) {
   if (prov === 'anthropic') {
     url  = endpoint + '/v1/messages';
     const sys = messages.find(m => m.role === 'system');
-    const budgetTokens = kiSettings.thinkingBudget || 8000;
+    const budgetTokens = S.kiSettings.thinkingBudget || 8000;
     body = {
       model,
-      max_tokens: kiSettings.thinking ? budgetTokens + 4096 : 4096,
+      max_tokens: S.kiSettings.thinking ? budgetTokens + 4096 : 4096,
       system: sys?.content || '',
       messages: messages.filter(m => m.role !== 'system'),
     };
-    if (kiSettings.thinking) {
+    if (S.kiSettings.thinking) {
       body.thinking = { type: 'enabled', budget_tokens: budgetTokens };
     }
   } else if (prov === 'google') {
@@ -215,9 +215,9 @@ async function callKiLLM(messages) {
         : [{ text: m.content }],
     }));
     body = { contents: turns, generationConfig: {} };
-    if (kiSettings.thinking) {
+    if (S.kiSettings.thinking) {
       body.generationConfig.thinkingConfig = {
-        thinkingBudget: kiSettings.thinkingBudget || 8000,
+        thinkingBudget: S.kiSettings.thinkingBudget || 8000,
         includeThoughts: true,
       };
     }
@@ -270,7 +270,7 @@ function parseKiResponse(text) {
 
 async function executeAIActions(actions) {
   if (!Array.isArray(actions)) return;
-  _kiBatchMode = true;
+  S._kiBatchMode = true;
   const findObj = id => canvas.getObjects().find(o => o.objId === id);
   try {
 
@@ -349,7 +349,7 @@ async function executeAIActions(actions) {
           break;
         }
         case 'renameLayer': {
-          const ly = layers.find(l =>
+          const ly = S.layers.find(l =>
             l.name?.toLowerCase() === act.layerName?.toLowerCase() || l.id === act.layerId
           );
           if (ly) {
@@ -365,21 +365,21 @@ async function executeAIActions(actions) {
         }
         case 'moveToLayer': {
           const o  = findObj(act.id);
-          const ly = layers.find(l => l.name === act.layerName || l.id === act.layerId);
+          const ly = S.layers.find(l => l.name === act.layerName || l.id === act.layerId);
           if (o && ly) moveObjectToLayer(o, ly.id);
           break;
         }
         case 'select': {
           const objs = (act.ids||[]).map(findObj).filter(Boolean);
           if (objs.length === 1) canvas.setActiveObject(objs[0]);
-          else if (objs.length > 1) canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas }));
+          else if (objs.length > 1) canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas: S.canvas }));
           break;
         }
         case 'addGuide': {
           let gAxis = act.axis === 'x' ? 'v' : act.axis === 'y' ? 'h' : act.axis;
           if ((gAxis === 'h' || gAxis === 'v') && act.pos != null) {
             guidesVisible = true;
-            guideLines[gAxis].push(Math.round(act.pos));
+            S.guideLines[gAxis].push(Math.round(act.pos));
             saveGuides();
             drawGuides();
             refreshLayersList();
@@ -389,7 +389,7 @@ async function executeAIActions(actions) {
         case 'moveGuide': {
           let gAxis = act.axis === 'x' ? 'v' : act.axis === 'y' ? 'h' : act.axis;
           if ((gAxis === 'h' || gAxis === 'v') && act.oldPos != null && act.newPos != null) {
-            const arr = guideLines[gAxis];
+            const arr = S.guideLines[gAxis];
             const i   = arr.findIndex(p => Math.abs(p - act.oldPos) < 8);
             if (i >= 0) { arr[i] = Math.round(act.newPos); saveGuides(); drawGuides(); refreshLayersList(); }
           }
@@ -398,26 +398,26 @@ async function executeAIActions(actions) {
         case 'removeGuide': {
           let gAxis = act.axis === 'x' ? 'v' : act.axis === 'y' ? 'h' : act.axis;
           if ((gAxis === 'h' || gAxis === 'v') && act.pos != null) {
-            const arr = guideLines[gAxis];
+            const arr = S.guideLines[gAxis];
             const i   = arr.findIndex(p => Math.abs(p - act.pos) < 8);
             if (i >= 0) { arr.splice(i, 1); saveGuides(); drawGuides(); refreshLayersList(); }
           }
           break;
         }
         case 'clearGuides': {
-          guideLines = { h: [], v: [] }; saveGuides(); drawGuides(); refreshLayersList();
+          S.guideLines = { h: [], v: [] }; saveGuides(); drawGuides(); refreshLayersList();
           break;
         }
       }
-      _nextLabel = _kiLabel();
+      S._nextLabel = _kiLabel();
     } catch (_) {}
   }
   } finally {
-    _kiBatchMode = false;
+    S._kiBatchMode = false;
   }
-  canvas.renderAll();
+  S.canvas.renderAll();
   drawGuides();
-  if (!_nextLabel) _nextLabel = 'KI-Aktion';
+  if (!S._nextLabel) S._nextLabel = 'KI-Aktion';
   saveHistory();
   refreshLayersList();
 }

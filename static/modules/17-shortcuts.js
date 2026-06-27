@@ -28,24 +28,24 @@ const SC_DEFAULTS = {
   snap_skip:      { key: 'Control',ctrl:false, alt:false, shift:false, label:'Einrasten ignorieren',   cat:'Verschieben' },
   scale_prop:     { key: 'p',      ctrl:false, alt:true,  shift:false, label:'Proportionen sperren',   cat:'Skalieren' },
 };
-let SC = {};
+S.SC = {};
 
 function _loadShortcuts() {
   try {
     const saved = JSON.parse(localStorage.getItem(SC_KEY)) || {};
-    SC = Object.fromEntries(
+    S.SC = Object.fromEntries(
       Object.entries(SC_DEFAULTS).map(([id, def]) => [id, { ...def, ...(saved[id] || {}) }])
     );
-  } catch(_) { SC = Object.fromEntries(Object.entries(SC_DEFAULTS).map(([k,v]) => [k, {...v}])); }
+  } catch(_) { S.SC = Object.fromEntries(Object.entries(SC_DEFAULTS).map(([k,v]) => [k, {...v}])); }
 }
 _loadShortcuts();
 
 function _saveShortcuts() {
-  try { localStorage.setItem(SC_KEY, JSON.stringify(SC)); } catch(_) {}
+  try { localStorage.setItem(SC_KEY, JSON.stringify(S.SC)); } catch(_) {}
 }
 
 function matchSC(e, id) {
-  const sc = SC[id]; if (!sc) return false;
+  const sc = S.SC[id]; if (!sc) return false;
   return e.key.toLowerCase() === sc.key.toLowerCase()
     && !!e.ctrlKey  === !!sc.ctrl
     && !!e.altKey   === !!sc.alt
@@ -53,7 +53,7 @@ function matchSC(e, id) {
 }
 
 function scLabel(id) {
-  const sc = SC[id]; if (!sc) return '';
+  const sc = S.SC[id]; if (!sc) return '';
   const parts = [];
   if (sc.ctrl)  parts.push('Ctrl');
   if (sc.alt)   parts.push('Alt');
@@ -71,7 +71,7 @@ function renderScManager() {
 
   const cats = [...new Set(Object.values(SC_DEFAULTS).map(s => s.cat))];
   cats.forEach(cat => {
-    const entries = Object.entries(SC).filter(([, v]) => v.cat === cat);
+    const entries = Object.entries(S.SC).filter(([, v]) => v.cat === cat);
     if (!entries.length) return;
 
     const hdr = document.createElement('div');
@@ -102,7 +102,7 @@ function renderScManager() {
         const onKey = ev => {
           ev.preventDefault(); ev.stopPropagation();
           if (ev.key === 'Escape') { cancel(); return; }
-          SC[id] = { ...SC[id], key: ev.key, ctrl: ev.ctrlKey, alt: ev.altKey, shift: ev.shiftKey };
+          S.SC[id] = { ...SC[id], key: ev.key, ctrl: ev.ctrlKey, alt: ev.altKey, shift: ev.shiftKey };
           _saveShortcuts();
           inp.textContent = scLabel(id);
           inp.classList.remove('sc-recording');
@@ -126,7 +126,7 @@ function renderScManager() {
       rst.title = 'Zurücksetzen';
       rst.textContent = '↺';
       rst.addEventListener('click', () => {
-        SC[id] = { ...SC_DEFAULTS[id] };
+        S.SC[id] = { ...SC_DEFAULTS[id] };
         _saveShortcuts();
         inp.textContent = scLabel(id);
       });
@@ -140,7 +140,7 @@ function renderScManager() {
 }
 
 document.getElementById('scResetAllBtn')?.addEventListener('click', () => {
-  SC = Object.fromEntries(Object.entries(SC_DEFAULTS).map(([k,v]) => [k, {...v}]));
+  S.SC = Object.fromEntries(Object.entries(SC_DEFAULTS).map(([k,v]) => [k, {...v}]));
   _saveShortcuts();
   renderScManager();
 });
@@ -152,15 +152,15 @@ document.querySelector('[data-sp-tab="shortcuts"]')?.addEventListener('click', r
 // ACHSSPERRUNG (Alt+X / Alt+Y beim Verschieben)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let axisLock    = null; // 'x' | 'y' | null
+S.axisLock    = null; // 'x' | 'y' | null
 let _axisStart  = null; // {left, top} beim Start des Verschiebens
-let _snapSkipActive = false;
+S._snapSkipActive = false;
 let _heldMods = { ctrl: false, alt: false, shift: false };
 let _heldRegKey = null;
 
-function _snapSkipKey() { return (SC['snap_skip']?.key || 'Shift').toLowerCase(); }
+function _snapSkipKey() { return (S.SC['snap_skip']?.key || 'Shift').toLowerCase(); }
 
-// Gibt 'exact', 'partial' oder null zurück für einen SC-Eintrag
+// Gibt 'exact', 'partial' oder null zurück für einen S.SC-Eintrag
 function _scState(sc) {
   const k = sc.key.toLowerCase();
   const isModKey = k === 'shift' || k === 'control' || k === 'alt';
@@ -184,7 +184,7 @@ function _renderStatusKeys() {
   const anyHeld = _heldMods.ctrl || _heldMods.alt || _heldMods.shift || _heldRegKey;
   if (!anyHeld) { _updateStatusKeys(); return; }
   el.innerHTML = '';
-  Object.entries(SC).forEach(([, sc]) => {
+  Object.entries(S.SC).forEach(([, sc]) => {
     const state = _scState(sc);
     if (!state) return;
     const p = document.createElement('span');
@@ -204,11 +204,11 @@ function _updateStatusKeys() {
     p.textContent = label;
     el.appendChild(p);
   };
-  if (_snapSkipActive)    add('⊘ Snap', true);
-  if (axisLock === 'x')   add('⟺ X-Achse', true);
-  if (axisLock === 'y')   add('⟺ Y-Achse', true);
-  if (gridState?.snap && gridState?.enabled) add('⊞ Raster', false);
-  if (guidesSnap)         add('┼ Linien', false);
+  if (S._snapSkipActive)    add('⊘ Snap', true);
+  if (S.axisLock === 'x')   add('⟺ X-Achse', true);
+  if (S.axisLock === 'y')   add('⟺ Y-Achse', true);
+  if (S.gridState?.snap && S.gridState?.enabled) add('⊞ Raster', false);
+  if (S.guidesSnap)         add('┼ Linien', false);
 }
 
 const _onAnyKeyDown = e => {
@@ -218,7 +218,7 @@ const _onAnyKeyDown = e => {
   _heldMods.shift = e.shiftKey || k === 'shift';
   // Reguläre Taste nur tracken wenn Modifier mitgedrückt (sonst flackert die Statusleiste bei jedem Buchstaben)
   if (!['control','alt','shift'].includes(k) && (e.ctrlKey || e.altKey)) _heldRegKey = k;
-  if (k === _snapSkipKey()) _snapSkipActive = true;
+  if (k === _snapSkipKey()) S._snapSkipActive = true;
   _renderStatusKeys();
 };
 const _onAnyKeyUp = e => {
@@ -227,7 +227,7 @@ const _onAnyKeyUp = e => {
   _heldMods.ctrl  = e.ctrlKey;
   _heldMods.alt   = e.altKey;
   _heldMods.shift = e.shiftKey;
-  if (k === _snapSkipKey()) _snapSkipActive = false;
+  if (k === _snapSkipKey()) S._snapSkipActive = false;
   _renderStatusKeys();
 };
 document.addEventListener('keydown', _onAnyKeyDown);
@@ -235,33 +235,33 @@ document.addEventListener('keyup',   _onAnyKeyUp);
 window.addEventListener('keydown',   _onAnyKeyDown);
 window.addEventListener('keyup',     _onAnyKeyUp);
 // Fallback: Modifier-State aus Fabric mouse:move (falls keyup ausserhalb gefeuert)
-canvas.on('mouse:move', opt => {
+S.canvas.on('mouse:move', opt => {
   const sk = _snapSkipKey();
   let nv;
   if      (sk === 'shift')   nv = !!(opt.e?.shiftKey);
   else if (sk === 'control') nv = !!(opt.e?.ctrlKey);
   else if (sk === 'alt')     nv = !!(opt.e?.altKey);
   else return;
-  if (_snapSkipActive !== nv) { _snapSkipActive = nv; _renderStatusKeys(); }
+  if (S._snapSkipActive !== nv) { S._snapSkipActive = nv; _renderStatusKeys(); }
 });
 
-canvas.on('mouse:down', opt => {
+S.canvas.on('mouse:down', opt => {
   const obj = opt.target;
   if (!obj || !obj.selectable) return;
   _axisStart = { left: obj.left, top: obj.top };
 });
 
-canvas.on('object:moving', opt => {
-  if (!axisLock || !_axisStart) return;
+S.canvas.on('object:moving', opt => {
+  if (!S.axisLock || !_axisStart) return;
   const obj = opt.target;
-  if (axisLock === 'x') obj.top  = _axisStart.top;   // nur X (links/rechts) erlaubt
-  if (axisLock === 'y') obj.left = _axisStart.left;  // nur Y (oben/unten) erlaubt
+  if (S.axisLock === 'x') obj.top  = _axisStart.top;   // nur X (links/rechts) erlaubt
+  if (S.axisLock === 'y') obj.left = _axisStart.left;  // nur Y (oben/unten) erlaubt
 });
 
 document.addEventListener('keydown', e => {
-  if (matchSC(e, 'axis_lock_x')) { e.preventDefault(); axisLock = axisLock === 'x' ? null : 'x'; setStatus(axisLock === 'x' ? '⟺ X-Achse gesperrt' : 'Achssperrung aufgehoben'); _renderStatusKeys(); }
-  if (matchSC(e, 'axis_lock_y')) { e.preventDefault(); axisLock = axisLock === 'y' ? null : 'y'; setStatus(axisLock === 'y' ? '⟺ Y-Achse gesperrt' : 'Achssperrung aufgehoben'); _renderStatusKeys(); }
+  if (matchSC(e, 'axis_lock_x')) { e.preventDefault(); S.axisLock = S.axisLock === 'x' ? null : 'x'; setStatus(S.axisLock === 'x' ? '⟺ X-Achse gesperrt' : 'Achssperrung aufgehoben'); _renderStatusKeys(); }
+  if (matchSC(e, 'axis_lock_y')) { e.preventDefault(); S.axisLock = S.axisLock === 'y' ? null : 'y'; setStatus(S.axisLock === 'y' ? '⟺ Y-Achse gesperrt' : 'Achssperrung aufgehoben'); _renderStatusKeys(); }
 }, true);
 
-canvas.on('mouse:up', () => { axisLock = null; _axisStart = null; _renderStatusKeys(); });
+S.canvas.on('mouse:up', () => { S.axisLock = null; _axisStart = null; _renderStatusKeys(); });
 

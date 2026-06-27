@@ -62,7 +62,7 @@ function kiSetStatus(text, color) {
 }
 
 function getKiRegionInCanvasCoords() {
-  if (!kiRegionRect) return null;
+  if (!S.kiRegionRect) return null;
   const videoCanvas = document.getElementById('videoCanvas');
   const wrapper     = document.getElementById('canvasWrapper');
   const vr  = videoCanvas.getBoundingClientRect();
@@ -72,16 +72,16 @@ function getKiRegionInCanvasCoords() {
   const scX  = videoCanvas.width  / vr.width;
   const scY  = videoCanvas.height / vr.height;
   return {
-    x: Math.round((kiRegionRect.rx - offX) * scX),
-    y: Math.round((kiRegionRect.ry - offY) * scY),
-    w: Math.round(kiRegionRect.rw * scX),
-    h: Math.round(kiRegionRect.rh * scY),
+    x: Math.round((S.kiRegionRect.rx - offX) * scX),
+    y: Math.round((S.kiRegionRect.ry - offY) * scY),
+    w: Math.round(S.kiRegionRect.rw * scX),
+    h: Math.round(S.kiRegionRect.rh * scY),
   };
 }
 
 function captureKiFrame() {
   const videoCanvas = document.getElementById('videoCanvas');
-  const fabricEl    = canvas.getElement();
+  const fabricEl    = S.canvas.getElement();
 
   let sx = 0, sy = 0, sw, sh;
   const region = getKiRegionInCanvasCoords();
@@ -128,7 +128,7 @@ async function sendKiMessage() {
   const input = document.getElementById('kiInput');
   const text  = input.value.trim();
   if (!text) return;
-  if (!kiSettings.endpoint || !kiSettings.model) {
+  if (!S.kiSettings.endpoint || !S.kiSettings.model) {
     kiAppendMessage('system', '⚠ KI nicht konfiguriert. Einstellungen → KI öffnen.', null);
     return;
   }
@@ -142,7 +142,7 @@ async function sendKiMessage() {
 
   const b64 = imageUrl.split(',')[1];
   let userContent;
-  if (detectKiProvider(kiSettings.endpoint) === 'anthropic') {
+  if (detectKiProvider(S.kiSettings.endpoint) === 'anthropic') {
     userContent = [
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
       { type: 'text', text },
@@ -181,17 +181,17 @@ async function sendKiMessage() {
     const reply    = parsed.reply || raw;
     const actions  = parsed.actions || [];
 
-    kiChatHistory.push({ role: 'user', content: text });
-    kiChatHistory.push({ role: 'assistant', content: raw, display: reply, actions });
+    S.kiChatHistory.push({ role: 'user', content: text });
+    S.kiChatHistory.push({ role: 'assistant', content: raw, display: reply, actions });
     const KI_MAX = 32;
-    if (kiChatHistory.length > KI_MAX) {
-      kiChatHistory = kiChatHistory.slice(-KI_MAX);
+    if (S.kiChatHistory.length > KI_MAX) {
+      S.kiChatHistory = S.kiChatHistory.slice(-KI_MAX);
     }
     saveKiChat();
 
     kiAppendMessage('assistant', reply, actions, thinking);
     if (actions.length) await executeAIActions(actions);
-    kiSetStatus(kiSettings.model, '');
+    kiSetStatus(S.kiSettings.model, '');
   } catch (e) {
     placeholder.remove();
     const errEl = document.getElementById('kiMessages');
@@ -212,7 +212,7 @@ async function sendKiMessage() {
     errMsg.appendChild(retryBtn);
     errEl.appendChild(errMsg);
     errEl.scrollTop = errEl.scrollHeight;
-    kiSetStatus(kiSettings.model, '');
+    kiSetStatus(S.kiSettings.model, '');
   }
 
   document.getElementById('kiSendBtn').disabled = false;
@@ -220,16 +220,16 @@ async function sendKiMessage() {
 }
 
 function updateKiPanel() {
-  const ready = !!(kiSettings.endpoint && kiSettings.model);
+  const ready = !!(S.kiSettings.endpoint && S.kiSettings.model);
   document.getElementById('kiPanelHint').style.display = ready ? 'none' : '';
   const chat = document.getElementById('kiChat');
   chat.style.display = ready ? 'flex' : 'none';
-  if (ready) kiSetStatus(kiSettings.model);
+  if (ready) kiSetStatus(S.kiSettings.model);
 }
 
 // ── KI Bereich-Auswahl ───────────────────────────────────────────────────────
 // Speichert NUR Koordinaten (Wrapper-Pixel) — Bild wird immer frisch aufgenommen
-let kiRegionRect = null; // {rx, ry, rw, rh} relativ zu canvasWrapper
+S.kiRegionRect = null; // {rx, ry, rw, rh} relativ zu canvasWrapper
 
 const KI_REGION_KEY = 'scopecam_ki_region_v1';
 
@@ -257,7 +257,7 @@ function createRegionBadge(rw, rh) {
   preview.querySelector('button').addEventListener('click', () => {
     closePopup(); _popup.remove();
     preview.remove();
-    kiRegionRect = null;
+    S.kiRegionRect = null;
     saveKiRegion();
     document.getElementById('kiRegionStatus').textContent = '';
   });
@@ -267,7 +267,7 @@ function createRegionBadge(rw, rh) {
     if (_popupOpen) { closePopup(); return; }
     _popupOpen = true;
     _popup.style.display = 'block';
-    const refresh = () => { if (kiRegionRect) _popupImg.src = captureKiFrame(); };
+    const refresh = () => { if (S.kiRegionRect) _popupImg.src = captureKiFrame(); };
     refresh();
     _liveInterval = setInterval(refresh, 500);
     requestAnimationFrame(() => {
@@ -285,13 +285,13 @@ function createRegionBadge(rw, rh) {
 }
 
 function saveKiRegion() {
-  if (!kiRegionRect) { try { localStorage.removeItem(KI_REGION_KEY); } catch (_) {} return; }
+  if (!S.kiRegionRect) { try { localStorage.removeItem(KI_REGION_KEY); } catch (_) {} return; }
   const wr = document.getElementById('canvasWrapper').getBoundingClientRect();
   if (!wr.width || !wr.height) return;
   try {
     localStorage.setItem(KI_REGION_KEY, JSON.stringify({
-      rx: kiRegionRect.rx / wr.width,  ry: kiRegionRect.ry / wr.height,
-      rw: kiRegionRect.rw / wr.width,  rh: kiRegionRect.rh / wr.height,
+      rx: S.kiRegionRect.rx / wr.width,  ry: S.kiRegionRect.ry / wr.height,
+      rw: S.kiRegionRect.rw / wr.width,  rh: S.kiRegionRect.rh / wr.height,
     }));
   } catch (_) {}
 }
@@ -302,7 +302,7 @@ function restoreKiRegion() {
     if (!saved) return;
     const wr = document.getElementById('canvasWrapper').getBoundingClientRect();
     if (!wr.width || !wr.height) return;
-    kiRegionRect = {
+    S.kiRegionRect = {
       rx: saved.rx * wr.width,  ry: saved.ry * wr.height,
       rw: saved.rw * wr.width,  rh: saved.rh * wr.height,
     };

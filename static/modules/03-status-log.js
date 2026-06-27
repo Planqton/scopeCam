@@ -31,7 +31,7 @@ function scopeLog(msg, level = 'info') {
   list.appendChild(row);
   list.scrollTop = list.scrollHeight;
   // Panel öffnen falls geschlossen
-  const state = panelStates['log'];
+  const state = S.panelStates['log'];
   if (state && !state.open) { state.open = true; applyPanel('log'); savePanelStates(); }
 }
 document.addEventListener('click', e => {

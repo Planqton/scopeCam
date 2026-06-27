@@ -10,15 +10,15 @@ const DPR      = () => window.devicePixelRatio || 1;
 function getImgOffset() {
   const wrapper = document.getElementById('canvasWrapper');
   return {
-    ox: Math.round((wrapper.offsetWidth  - videoCanvas.offsetWidth)  / 2),
-    oy: Math.round((wrapper.offsetHeight - videoCanvas.offsetHeight) / 2),
+    ox: Math.round((wrapper.offsetWidth  - S.videoCanvas.offsetWidth)  / 2),
+    oy: Math.round((wrapper.offsetHeight - S.videoCanvas.offsetHeight) / 2),
   };
 }
 
 function px2label(px, axis) {
-  const unit = settings.ruler_unit || 'px';
-  const ppm  = settings.scale_px_per_mm;
-  const dim  = axis === 'x' ? videoCanvas.offsetWidth : videoCanvas.offsetHeight;
+  const unit = S.settings.ruler_unit || 'px';
+  const ppm  = S.settings.scale_px_per_mm;
+  const dim  = axis === 'x' ? S.videoCanvas.offsetWidth : S.videoCanvas.offsetHeight;
   switch (unit) {
     case 'mm':   return ppm ? (px / ppm).toFixed(px / ppm < 10 ? 1 : 0) : String(Math.round(px));
     case 'inch': return ppm ? (px / ppm / 25.4).toFixed(2) : (px / 96).toFixed(2);
@@ -28,8 +28,8 @@ function px2label(px, axis) {
 }
 
 function chooseStep(imgPx, Z = 1) {
-  const unit = settings.ruler_unit || 'px';
-  const ppm  = settings.scale_px_per_mm;
+  const unit = S.settings.ruler_unit || 'px';
+  const ppm  = S.settings.scale_px_per_mm;
   const MIN_SCREEN = 8; // minimum visual screen pixels between ticks
   let candidates, scale;
   if      (unit === 'mm'   && ppm) { candidates = [0.5,1,2,5,10,20,50,100]; scale = ppm; }
@@ -63,16 +63,16 @@ function getRulerColors() {
 
 function drawHRuler(cursorImgX = null) {
   const wrapper = document.getElementById('canvasWrapper');
-  const totalW  = wrapper.offsetWidth, imgW = videoCanvas.offsetWidth;
+  const totalW  = wrapper.offsetWidth, imgW = S.videoCanvas.offsetWidth;
   if (!totalW || !imgW) return;
-  const { ox } = getImgOffset(), dpr = DPR(), Z = zoomLevel;
+  const { ox } = getImgOffset(), dpr = DPR(), Z = S.zoomLevel;
   const C = getRulerColors();
   rulerH.width  = totalW * dpr; rulerH.height = RULER_SZ * dpr;
   rulerH.style.width = totalW + 'px'; rulerH.style.height = RULER_SZ + 'px';
   const ctx = rulerH.getContext('2d');
   ctx.save(); ctx.scale(dpr, dpr);
   // image pixel → ruler screen x (accounting for zoom + pan)
-  const imgToSx = imgX => (ox + imgX - totalW / 2) * Z + totalW / 2 + panX;
+  const imgToSx = imgX => (ox + imgX - totalW / 2) * Z + totalW / 2 + S.panX;
   ctx.fillStyle = C.bgOut; ctx.fillRect(0, 0, totalW, RULER_SZ);
   const imgLeft = imgToSx(0), imgRight = imgToSx(imgW);
   if (imgRight > 0 && imgLeft < totalW) {
@@ -86,8 +86,8 @@ function drawHRuler(cursorImgX = null) {
   });
   const { minorPx, majorPx } = chooseStep(imgW, Z);
   // visible image range
-  const imgStart = Math.ceil(((0 - totalW/2 - panX) / Z + totalW/2 - ox) / minorPx) * minorPx;
-  const imgEnd   = (totalW/2 - panX) / Z + totalW/2 - ox;
+  const imgStart = Math.ceil(((0 - totalW/2 - S.panX) / Z + totalW/2 - ox) / minorPx) * minorPx;
+  const imgEnd   = (totalW/2 - S.panX) / Z + totalW/2 - ox;
   ctx.textBaseline = 'top'; ctx.font = '9px monospace';
   for (let imgX = imgStart; imgX <= imgEnd + minorPx; imgX += minorPx) {
     const sx = imgToSx(imgX); if (sx < 0 || sx > totalW) continue;
@@ -106,15 +106,15 @@ function drawHRuler(cursorImgX = null) {
 
 function drawVRuler(cursorImgY = null) {
   const wrapper = document.getElementById('canvasWrapper');
-  const totalH  = wrapper.offsetHeight, imgH = videoCanvas.offsetHeight;
+  const totalH  = wrapper.offsetHeight, imgH = S.videoCanvas.offsetHeight;
   if (!totalH || !imgH) return;
-  const { oy } = getImgOffset(), dpr = DPR(), Z = zoomLevel;
+  const { oy } = getImgOffset(), dpr = DPR(), Z = S.zoomLevel;
   const C = getRulerColors();
   rulerV.width  = RULER_SZ * dpr; rulerV.height = totalH * dpr;
   rulerV.style.width = RULER_SZ + 'px'; rulerV.style.height = totalH + 'px';
   const ctx = rulerV.getContext('2d');
   ctx.save(); ctx.scale(dpr, dpr);
-  const imgToSy = imgY => (oy + imgY - totalH / 2) * Z + totalH / 2 + panY;
+  const imgToSy = imgY => (oy + imgY - totalH / 2) * Z + totalH / 2 + S.panY;
   ctx.fillStyle = C.bgOut; ctx.fillRect(0,0,RULER_SZ,totalH);
   const imgTop = imgToSy(0), imgBot = imgToSy(imgH);
   if (imgBot > 0 && imgTop < totalH) {
@@ -127,8 +127,8 @@ function drawVRuler(cursorImgY = null) {
     if (sy>=0 && sy<=totalH) { ctx.beginPath(); ctx.moveTo(0,sy+.5); ctx.lineTo(RULER_SZ,sy+.5); ctx.stroke(); }
   });
   const { minorPx, majorPx } = chooseStep(imgH, Z);
-  const imgStart = Math.ceil(((0 - totalH/2 - panY) / Z + totalH/2 - oy) / minorPx) * minorPx;
-  const imgEnd   = (totalH/2 - panY) / Z + totalH/2 - oy;
+  const imgStart = Math.ceil(((0 - totalH/2 - S.panY) / Z + totalH/2 - oy) / minorPx) * minorPx;
+  const imgEnd   = (totalH/2 - S.panY) / Z + totalH/2 - oy;
   ctx.font = '9px monospace'; ctx.textBaseline = 'middle';
   for (let imgY = imgStart; imgY <= imgEnd + minorPx; imgY += minorPx) {
     const sy = imgToSy(imgY); if (sy<0 || sy>totalH) continue;

@@ -2,20 +2,20 @@
 // VIDEO / WEBSOCKET
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const videoCanvas = document.getElementById('videoCanvas');
-const videoCtx    = videoCanvas.getContext('2d');
+S.videoCanvas = document.getElementById('videoCanvas');
+S.videoCtx    = S.videoCanvas.getContext('2d');
 let ws = null;
 
 const demoImg = new Image();
 demoImg.src = '/demo.png';
 
-function isDemo() { return settings.device === 'demo'; }
+function isDemo() { return S.settings.device === 'demo'; }
 
 function showDemo() {
   if (!demoImg.complete || !demoImg.naturalWidth) { demoImg.onload = showDemo; return; }
-  videoCanvas.width  = demoImg.naturalWidth;
-  videoCanvas.height = demoImg.naturalHeight;
-  videoCtx.drawImage(demoImg, 0, 0);
+  S.videoCanvas.width  = demoImg.naturalWidth;
+  S.videoCanvas.height = demoImg.naturalHeight;
+  S.videoCtx.drawImage(demoImg, 0, 0);
   syncCanvasSize();
 }
 
@@ -40,12 +40,12 @@ function connectWS() {
     clearTimeout(noSignalTimer);
     showNoSignal(false);
     const bitmap = await createImageBitmap(e.data);
-    if (videoCanvas.width !== bitmap.width || videoCanvas.height !== bitmap.height) {
-      videoCanvas.width  = bitmap.width;
-      videoCanvas.height = bitmap.height;
+    if (S.videoCanvas.width !== bitmap.width || S.videoCanvas.height !== bitmap.height) {
+      S.videoCanvas.width  = bitmap.width;
+      S.videoCanvas.height = bitmap.height;
       syncCanvasSize();
     }
-    if (!_streamFrozen) videoCtx.drawImage(bitmap, 0, 0);
+    if (!S._streamFrozen) S.videoCtx.drawImage(bitmap, 0, 0);
     bitmap.close();
   };
   ws.onclose = () => {

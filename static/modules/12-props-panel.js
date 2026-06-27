@@ -7,14 +7,14 @@ function showPropsSection(id, show) {
 }
 
 function updatePropsPanel() {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (objs.length === 0) { clearPropsPanel(); return; }
 
   showPropsSection('propsObj', true);
 
   // Für Mehrfachauswahl: Werte des ersten Objekts als Referenz zeigen.
   // Bei ActiveSelection (Link-Gruppe) IText-Objekt bevorzugen für Text-Properties.
-  const _rawObj = canvas.getActiveObject();
+  const _rawObj = S.canvas.getActiveObject();
   const obj = _rawObj?.type === 'activeSelection'
     ? (_rawObj.getObjects().find(o => o instanceof fabric.IText) || _rawObj.getObjects()[0] || _rawObj)
     : _rawObj;
@@ -67,19 +67,19 @@ function clearPropsPanel() {
 
 // Rahmen
 document.getElementById('propStroke').addEventListener('input', () => {
-  canvas.getActiveObjects().forEach(o => o.set('stroke', document.getElementById('propStroke').value));
-  canvas.renderAll();
+  S.canvas.getActiveObjects().forEach(o => o.set('stroke', document.getElementById('propStroke').value));
+  S.canvas.renderAll();
 });
-document.getElementById('propStroke').addEventListener('change', () => { _nextLabel = 'Farbe geändert'; saveHistory(); });
+document.getElementById('propStroke').addEventListener('change', () => { S._nextLabel = 'Farbe geändert'; saveHistory(); });
 document.getElementById('propStrokeW').addEventListener('input', function () {
-  canvas.getActiveObjects().forEach(o => o.set('strokeWidth', parseInt(this.value, 10)));
-  canvas.renderAll();
+  S.canvas.getActiveObjects().forEach(o => o.set('strokeWidth', parseInt(this.value, 10)));
+  S.canvas.renderAll();
 });
-document.getElementById('propStrokeW').addEventListener('change', () => { _nextLabel = 'Strichbreite'; saveHistory(); });
+document.getElementById('propStrokeW').addEventListener('change', () => { S._nextLabel = 'Strichbreite'; saveHistory(); });
 
 // Bemaßungs-Override
 document.getElementById('propDimOverride').addEventListener('change', function () {
-  const obj = canvas.getActiveObject();
+  const obj = S.canvas.getActiveObject();
   if (!obj?.isDimension) return;
   if (this.checked) {
     obj.dimLabelOverride = document.getElementById('propDimLabel').value || getDimAutoLabel(obj.dimPx || 0);
@@ -92,7 +92,7 @@ document.getElementById('propDimOverride').addEventListener('change', function (
   saveHistory();
 });
 document.getElementById('propDimLabel').addEventListener('input', function () {
-  const obj = canvas.getActiveObject();
+  const obj = S.canvas.getActiveObject();
   if (!obj?.isDimension) return;
   obj.dimLabelOverride = this.value;
   applyDimLabel(obj);
@@ -103,17 +103,17 @@ document.getElementById('propDimLabel').addEventListener('change', () => saveHis
 let _propUnit = localStorage.getItem('scopecam_prop_unit') || 'px';
 
 function _pxToCoord(px) {
-  if (_propUnit === 'mm' && settings.scale_px_per_mm > 0)
-    return Math.round(px / settings.scale_px_per_mm * 10) / 10;
+  if (_propUnit === 'mm' && S.settings.scale_px_per_mm > 0)
+    return Math.round(px / S.settings.scale_px_per_mm * 10) / 10;
   return Math.round(px * 10) / 10;
 }
 function _coordToPx(v) {
-  if (_propUnit === 'mm' && settings.scale_px_per_mm > 0)
-    return v * settings.scale_px_per_mm;
+  if (_propUnit === 'mm' && S.settings.scale_px_per_mm > 0)
+    return v * S.settings.scale_px_per_mm;
   return v;
 }
 function _updateCoordUnitLabel() {
-  const label = (_propUnit === 'mm' && settings.scale_px_per_mm > 0) ? 'mm' : 'px';
+  const label = (_propUnit === 'mm' && S.settings.scale_px_per_mm > 0) ? 'mm' : 'px';
   ['propPosUnit','propEndUnit'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = label;
@@ -135,10 +135,10 @@ function _refreshCoordFields(obj) {
 // Klick auf Einheiten-Label → px/mm umschalten
 ['propPosUnit','propEndUnit'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', () => {
-    if (!(settings.scale_px_per_mm > 0)) return; // kein mm ohne Kalibrierung
+    if (!(S.settings.scale_px_per_mm > 0)) return; // kein mm ohne Kalibrierung
     _propUnit = _propUnit === 'px' ? 'mm' : 'px';
     localStorage.setItem('scopecam_prop_unit', _propUnit);
-    const obj = canvas.getActiveObject();
+    const obj = S.canvas.getActiveObject();
     if (obj) _refreshCoordFields(obj);
   });
 });
@@ -146,13 +146,13 @@ function _refreshCoordFields(obj) {
 // Start-Position bearbeiten
 ['propLeft', 'propTop'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
-    const objs = canvas.getActiveObjects();
+    const objs = S.canvas.getActiveObjects();
     if (!objs.length) return;
     const v = _coordToPx(parseFloat(document.getElementById(id).value) || 0);
     const prop = id === 'propLeft' ? 'left' : 'top';
     objs.forEach(o => { o.set(prop, v); o.setCoords(); });
-    canvas.renderAll();
-    _nextLabel = 'Verschoben';
+    S.canvas.renderAll();
+    S._nextLabel = 'Verschoben';
     saveHistory();
   });
 });
@@ -160,7 +160,7 @@ function _refreshCoordFields(obj) {
 // Ende-Position bearbeiten → ändert Größe (width/height), kein scaleX/scaleY
 ['propEndX', 'propEndY'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
-    const obj = canvas.getActiveObject();
+    const obj = S.canvas.getActiveObject();
     if (!obj) return;
     const v = _coordToPx(parseFloat(document.getElementById(id).value) || 0);
     if (id === 'propEndX') {
@@ -171,8 +171,8 @@ function _refreshCoordFields(obj) {
       obj.set({ height: newH / (obj.scaleY ?? 1) });
     }
     obj.setCoords();
-    canvas.renderAll();
-    _nextLabel = 'Größe geändert';
+    S.canvas.renderAll();
+    S._nextLabel = 'Größe geändert';
     saveHistory();
   });
 });
@@ -180,20 +180,20 @@ function _refreshCoordFields(obj) {
 // Füllung
 document.getElementById('propFill').addEventListener('input', () => {
   if (document.getElementById('propFillNone').checked) return;
-  canvas.getActiveObjects().forEach(o => o.set('fill', document.getElementById('propFill').value));
-  canvas.renderAll();
+  S.canvas.getActiveObjects().forEach(o => o.set('fill', document.getElementById('propFill').value));
+  S.canvas.renderAll();
 });
-document.getElementById('propFill').addEventListener('change', () => { _nextLabel = 'Füllung geändert'; saveHistory(); });
+document.getElementById('propFill').addEventListener('change', () => { S._nextLabel = 'Füllung geändert'; saveHistory(); });
 document.getElementById('propFillNone').addEventListener('change', function () {
-  canvas.getActiveObjects().forEach(o => o.set('fill', this.checked ? 'transparent' : document.getElementById('propFill').value));
-  canvas.renderAll();
-  _nextLabel = this.checked ? 'Füllung: transparent' : 'Füllung gesetzt';
+  S.canvas.getActiveObjects().forEach(o => o.set('fill', this.checked ? 'transparent' : document.getElementById('propFill').value));
+  S.canvas.renderAll();
+  S._nextLabel = this.checked ? 'Füllung: transparent' : 'Füllung gesetzt';
   saveHistory();
 });
 
 // Text-Inhalt
 function _getActiveText() {
-  const raw = canvas.getActiveObject();
+  const raw = S.canvas.getActiveObject();
   if (!raw) return null;
   if (raw.type === 'i-text' || raw.type === 'text') return raw;
   if (raw.type === 'activeSelection') return raw.getObjects().find(o => o.type === 'i-text' || o.type === 'text') || null;
@@ -202,29 +202,29 @@ function _getActiveText() {
 
 document.getElementById('propTextContent').addEventListener('input', function () {
   const obj = _getActiveText();
-  if (obj) { obj.set('text', this.value); canvas.renderAll(); }
+  if (obj) { obj.set('text', this.value); S.canvas.renderAll(); }
 });
 document.getElementById('propTextContent').addEventListener('change', function () {
   const obj = _getActiveText();
-  if (obj) { _nextLabel = 'Text bearbeitet'; saveHistory(); }
+  if (obj) { S._nextLabel = 'Text bearbeitet'; saveHistory(); }
 });
 // Schriftart
 document.getElementById('propFontFamily').addEventListener('change', function () {
   const obj = _getActiveText();
-  if (obj) { obj.set('fontFamily', this.value); canvas.renderAll(); _nextLabel = 'Schriftart'; saveHistory(); }
+  if (obj) { obj.set('fontFamily', this.value); S.canvas.renderAll(); S._nextLabel = 'Schriftart'; saveHistory(); }
 });
 // Schriftgröße
 document.getElementById('propFontSize').addEventListener('input', function () {
   const obj = _getActiveText();
-  if (obj) { obj.set('fontSize', parseInt(this.value, 10) || 16); canvas.renderAll(); }
+  if (obj) { obj.set('fontSize', parseInt(this.value, 10) || 16); S.canvas.renderAll(); }
 });
-document.getElementById('propFontSize').addEventListener('change', () => { _nextLabel = 'Schriftgröße'; saveHistory(); });
+document.getElementById('propFontSize').addEventListener('change', () => { S._nextLabel = 'Schriftgröße'; saveHistory(); });
 // Textfarbe
 document.getElementById('propTextColor').addEventListener('input', function () {
   const obj = _getActiveText();
-  if (obj) { obj.set('fill', this.value); canvas.renderAll(); }
+  if (obj) { obj.set('fill', this.value); S.canvas.renderAll(); }
 });
-document.getElementById('propTextColor').addEventListener('change', () => { _nextLabel = 'Textfarbe'; saveHistory(); });
+document.getElementById('propTextColor').addEventListener('change', () => { S._nextLabel = 'Textfarbe'; saveHistory(); });
 
 // Formatierungs-Buttons
 function makeFormatToggle(btnId, prop, onVal, offVal) {
@@ -234,7 +234,7 @@ function makeFormatToggle(btnId, prop, onVal, offVal) {
     const isOn = obj[prop] === onVal;
     obj.set(prop, isOn ? offVal : onVal);
     document.getElementById(btnId).classList.toggle('active', !isOn);
-    canvas.renderAll();
+    S.canvas.renderAll();
     saveHistory();
   });
 }
@@ -244,15 +244,15 @@ makeFormatToggle('propUnderline',   'underline',   true,     false);
 makeFormatToggle('propLinethrough', 'linethrough', true,     false);
 
 // ── Verknüpfungs-Logik ──────────────────────────────────────────────────────
-let _suppressLinkExpand = false;
+S._suppressLinkExpand = false;
 
 function getLinkGroupMembers(id) {
-  return canvas.getObjects().filter(o => o.linkGroup === id);
+  return S.canvas.getObjects().filter(o => o.linkGroup === id);
 }
 
 function expandToLinkGroup(e) {
-  if (_suppressLinkExpand) return;
-  const selected = canvas.getActiveObjects();
+  if (S._suppressLinkExpand) return;
+  const selected = S.canvas.getActiveObjects();
   if (!selected.length) return;
 
   const extraIds = new Set();
@@ -263,33 +263,33 @@ function expandToLinkGroup(e) {
   extraIds.forEach(id => getLinkGroupMembers(id).forEach(o => expanded.add(o)));
   if (expanded.size === selected.length) return;
 
-  _suppressLinkExpand = true;
-  const sel = new fabric.ActiveSelection([...expanded], { canvas });
-  canvas.setActiveObject(sel);
-  canvas.requestRenderAll();
-  _suppressLinkExpand = false;
+  S._suppressLinkExpand = true;
+  const sel = new fabric.ActiveSelection([...expanded], { canvas: S.canvas });
+  S.canvas.setActiveObject(sel);
+  S.canvas.requestRenderAll();
+  S._suppressLinkExpand = false;
 }
 
 function linkSelectedObjects() {
-  const objs = canvas.getActiveObjects().filter(o => !o.locked);
+  const objs = S.canvas.getActiveObjects().filter(o => !o.locked);
   if (objs.length < 2) return;
   const id = crypto.randomUUID();
   objs.forEach(o => { o.linkGroup = id; });
-  _nextLabel = `${objs.length} Objekte verknüpft`;
+  S._nextLabel = `${objs.length} Objekte verknüpft`;
   saveHistory();
   refreshLayersList();
 }
 
 function unlinkObjects(objs) {
   objs.forEach(o => { o.linkGroup = null; });
-  _nextLabel = 'Verknüpfung aufgehoben';
+  S._nextLabel = 'Verknüpfung aufgehoben';
   saveHistory();
   refreshLayersList();
 }
 
 // ── Verbindungslinien für verknüpfte Objekte ──────────────────────────────
-canvas.on('after:render', () => {
-  const objs = canvas.getObjects();
+S.canvas.on('after:render', () => {
+  const objs = S.canvas.getObjects();
   const groups = {};
   objs.forEach(o => {
     if (!o.linkGroup || o.objVisible === false) return;
@@ -297,10 +297,10 @@ canvas.on('after:render', () => {
   });
   if (!Object.keys(groups).length) return;
 
-  const ctx = canvas.getContext();
-  const vt  = canvas.viewportTransform;  // [scaleX,0,0,scaleY,tx,ty]
+  const ctx = S.canvas.getContext();
+  const vt  = S.canvas.viewportTransform;  // [scaleX,0,0,scaleY,tx,ty]
   const z   = vt[0];                     // zoom level
-  const active = new Set(canvas.getActiveObjects());
+  const active = new Set(S.canvas.getActiveObjects());
 
   ctx.save();
   ctx.transform(vt[0], vt[1], vt[2], vt[3], vt[4], vt[5]);
@@ -342,23 +342,23 @@ canvas.on('after:render', () => {
   ctx.restore();
 });
 
-canvas.on('selection:created', e => { expandToLinkGroup(e); updatePropsPanel(); refreshLayersList(); });
-canvas.on('selection:updated', e => { expandToLinkGroup(e); updatePropsPanel(); refreshLayersList(); });
-canvas.on('selection:cleared', () => { clearPropsPanel();  refreshLayersList(); });
-canvas.on('object:moving', () => {
-  const obj = canvas.getActiveObject();
+S.canvas.on('selection:created', e => { expandToLinkGroup(e); updatePropsPanel(); refreshLayersList(); });
+S.canvas.on('selection:updated', e => { expandToLinkGroup(e); updatePropsPanel(); refreshLayersList(); });
+S.canvas.on('selection:cleared', () => { clearPropsPanel();  refreshLayersList(); });
+S.canvas.on('object:moving', () => {
+  const obj = S.canvas.getActiveObject();
   if (obj) _refreshCoordFields(obj);
 });
 // (object:scaling-Handler ist weiter unten als vereinheitlichter Handler)
-canvas.on('object:modified', e => {
+S.canvas.on('object:modified', e => {
   // uniformScaling nach Skalierung zurücksetzen (Shift-Quadrat nur während Drag)
-  canvas.uniformScaling = _aspectLocked;
+  S.canvas.uniformScaling = S._aspectLocked;
   const obj = e.target;
-  if (!_nextLabel) {
+  if (!S._nextLabel) {
     const name = obj?.customName || obj?.type || '';
     const prefix = name ? `${name}: ` : '';
     const actionMap = { drag:'Verschoben', scale:'Skaliert', scaleX:'Skaliert X', scaleY:'Skaliert Y', rotate:'Rotiert', skewX:'Verzerrt', skewY:'Verzerrt', resize:'Größe' };
-    _nextLabel = prefix + (actionMap[e.action] || 'Bearbeitet');
+    S._nextLabel = prefix + (actionMap[e.action] || 'Bearbeitet');
   }
   saveHistory();
   updatePropsPanel();

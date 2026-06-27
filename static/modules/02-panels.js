@@ -16,42 +16,42 @@ const PANEL_DEFAULTS = {
   console:  { mode: 'bottom', open: false, collapsed: false, x: 20,  y: 200, dockOrder: 5 },
 };
 
-let panelStates = {};
+S.panelStates = {};
 let zTop = 1000;
 
 // Cache Panel-Elemente beim Start — querySelector schlägt nach el.remove() fehl.
-const panelElCache = {};
+S.panelElCache = {};
 document.querySelectorAll('.panel[data-panel]').forEach(el => {
-  panelElCache[el.dataset.panel] = el;
+  S.panelElCache[el.dataset.panel] = el;
 });
 
 function loadPanelStates() {
   try {
     const saved = JSON.parse(localStorage.getItem(PANEL_KEY)) || {};
-    panelStates = {};
+    S.panelStates = {};
     for (const id in PANEL_DEFAULTS) {
-      panelStates[id] = { ...PANEL_DEFAULTS[id], ...(saved[id] || {}) };
+      S.panelStates[id] = { ...PANEL_DEFAULTS[id], ...(saved[id] || {}) };
     }
     if (saved._activeBottomTab) _activeBottomTab = saved._activeBottomTab;
   } catch {
-    panelStates = Object.fromEntries(
+    S.panelStates = Object.fromEntries(
       Object.entries(PANEL_DEFAULTS).map(([k, v]) => [k, { ...v }])
     );
   }
 }
 
 function savePanelStates() {
-  try { localStorage.setItem(PANEL_KEY, JSON.stringify(panelStates)); } catch (_) {}
+  try { localStorage.setItem(PANEL_KEY, JSON.stringify(S.panelStates)); } catch (_) {}
 }
 
 // Sicherheitsnetz: immer speichern wenn die Seite verlassen wird
 window.addEventListener('beforeunload', e => {
   savePanelStates();
-  const anyDirty = tabs.some(_tabHasUnsavedChanges) || _isDirty();
+  const anyDirty = S.tabs.some(_tabHasUnsavedChanges) || _isDirty();
   if (anyDirty) { e.preventDefault(); e.returnValue = ''; }
 });
 
-function getPanelEl(id) { return panelElCache[id] || null; }
+function getPanelEl(id) { return S.panelElCache[id] || null; }
 
 function updateDockClass(dockEl) {
   dockEl.classList.toggle('has-panels', dockEl.querySelector('.panel') !== null);
@@ -89,7 +89,7 @@ function _refreshBottomTabs() {
     btn.title = label;
     btn.addEventListener('click', () => {
       _activeBottomTab = pid;
-      panelStates._activeBottomTab = pid;
+      S.panelStates._activeBottomTab = pid;
       savePanelStates();
       _refreshBottomTabs();
     });
@@ -100,7 +100,7 @@ function _refreshBottomTabs() {
 
 function applyPanel(id) {
   const el = getPanelEl(id);
-  const st = panelStates[id];
+  const st = S.panelStates[id];
   if (!el || !st) return;
 
   if (!st.open) {
@@ -127,7 +127,7 @@ function applyPanel(id) {
     const dockId = st.mode === 'left' ? 'dockLeft' : st.mode === 'right' ? 'dockRight' : 'dockBottom';
     const dock   = document.getElementById(dockId);
     const others = [...dock.querySelectorAll('.panel')].filter(p => p !== el);
-    const before = others.find(p => (panelStates[p.dataset.panel]?.dockOrder ?? 99) > st.dockOrder);
+    const before = others.find(p => (S.panelStates[p.dataset.panel]?.dockOrder ?? 99) > st.dockOrder);
     dock.insertBefore(el, before || null);
     el.style.position = '';
     el.style.left     = '';
@@ -148,7 +148,7 @@ function applyPanel(id) {
 function updatePanelToggles() {
   document.querySelectorAll('.panel-toggle[data-panel]').forEach(item => {
     const id = item.dataset.panel;
-    item.querySelector('.checkmark').textContent = (panelStates[id]?.open ?? false) ? '✓' : '';
+    item.querySelector('.checkmark').textContent = (S.panelStates[id]?.open ?? false) ? '✓' : '';
   });
 }
 
@@ -159,7 +159,7 @@ function panelStartDrag(id, e) {
   if (e.target.matches('.p-btn')) return;
   e.preventDefault();
   const el = getPanelEl(id);
-  const st = panelStates[id];
+  const st = S.panelStates[id];
   const rect = el.getBoundingClientRect();
 
   drag = {
@@ -193,7 +193,7 @@ function onPanelDragMove(e) {
     if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
     drag.undocked = true;
     const el = getPanelEl(drag.id);
-    const st = panelStates[drag.id];
+    const st = S.panelStates[drag.id];
     st.mode = 'float';
     st.x    = drag.origX;
     st.y    = drag.origY;
@@ -230,7 +230,7 @@ function onPanelDragEnd(e) {
   }
 
   const el  = getPanelEl(drag.id);
-  const st  = panelStates[drag.id];
+  const st  = S.panelStates[drag.id];
   const vw  = window.innerWidth, vh = window.innerHeight;
   const LR  = 100;
   const dockBotRect2 = document.getElementById('dockBottom').getBoundingClientRect();
@@ -264,7 +264,7 @@ document.querySelectorAll('.panel-toggle[data-panel]').forEach(item => {
   item.addEventListener('click', e => {
     e.stopPropagation();
     const id = item.dataset.panel;
-    const st = panelStates[id];
+    const st = S.panelStates[id];
     st.open = !st.open;
     if (st.open && st.mode === 'float' && !st.x) { st.x = 120; st.y = 80; }
     applyPanel(id);
@@ -276,22 +276,22 @@ document.querySelectorAll('.panel-toggle[data-panel]').forEach(item => {
 document.querySelectorAll('.panel').forEach(el => {
   const id = el.dataset.panel;
   el.querySelector('.p-close').addEventListener('click', () => {
-    panelStates[id].open = false;
+    S.panelStates[id].open = false;
     applyPanel(id);
     savePanelStates();
   });
   el.querySelector('.p-collapse').addEventListener('click', () => {
-    panelStates[id].collapsed = !panelStates[id].collapsed;
+    S.panelStates[id].collapsed = !S.panelStates[id].collapsed;
     applyPanel(id);
     savePanelStates();
   });
   el.querySelector('.panel-header').addEventListener('mousedown', e => panelStartDrag(id, e));
   el.addEventListener('mousedown', () => {
-    if (panelStates[id].mode === 'float') {
+    if (S.panelStates[id].mode === 'float') {
       el.style.zIndex = ++zTop;
       // x/y aus aktuellem DOM übernehmen falls Panel gerade platziert wurde
-      panelStates[id].x = parseFloat(el.style.left) || panelStates[id].x;
-      panelStates[id].y = parseFloat(el.style.top)  || panelStates[id].y;
+      S.panelStates[id].x = parseFloat(el.style.left) || S.panelStates[id].x;
+      S.panelStates[id].y = parseFloat(el.style.top)  || S.panelStates[id].y;
       savePanelStates();
     }
   });
@@ -385,7 +385,7 @@ function addPanelResizeHandle(el, id) {
   el.appendChild(handle);
 
   handle.addEventListener('mousedown', e => {
-    const st = panelStates[id];
+    const st = S.panelStates[id];
     if (st.mode !== 'float' && st.mode !== 'bottom') return;
     e.preventDefault();
     const startX = e.clientX;
@@ -415,7 +415,7 @@ applyDockWidths();
 setupDockResizeHandles();
 loadPanelStates();
 const _wantedBottomTab = _activeBottomTab; // vor applyPanel sichern — _refreshBottomTabs überschreibt es
-Object.keys(panelStates).forEach(applyPanel);
+Object.keys(S.panelStates).forEach(applyPanel);
 // Nach allen Panels: gewünschten Tab wiederherstellen (erst jetzt sind alle Panels im Dock)
 if (_wantedBottomTab) { _activeBottomTab = _wantedBottomTab; _refreshBottomTabs(); }
 

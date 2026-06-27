@@ -11,7 +11,7 @@ const TOOL_NAMES = {
 document.querySelectorAll('.tool-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tool = btn.dataset.tool;
-    if (currentTool === tool) {
+    if (S.currentTool === tool) {
       deactivateTool();
     } else {
       clearTextPreview();
@@ -24,28 +24,28 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
 
 function activateTool(tool) {
   // Measure/Callout zurücksetzen
-  if (currentTool === 'measure')  { _measurePt1 = null; _measureOverlay.style.display = 'none'; }
-  if (currentTool === 'callout')  { _calloutClean(); _calloutAnchor = null; }
+  if (S.currentTool === 'measure')  { S._measurePt1 = null; S._measureOverlay.style.display = 'none'; }
+  if (S.currentTool === 'callout')  { _calloutClean(); S._calloutAnchor = null; }
   // Polylinie abbrechen wenn anderes Werkzeug gewählt wird
-  if (currentTool === 'polyline' && tool !== 'polyline') {
+  if (S.currentTool === 'polyline' && tool !== 'polyline') {
     _polyCleanPreview();
-    if (_polyPts.length >= 2) _polyFinish();
+    if (S._polyPts.length >= 2) _polyFinish();
     else {
-      canvas.getObjects().filter(o => o._polyTmp).forEach(o => canvas.remove(o));
-      _polyPts = []; _polyLinkId = null;
+      S.canvas.getObjects().filter(o => o._polyTmp).forEach(o => S.canvas.remove(o));
+      S._polyPts = []; S._polyLinkId = null;
     }
   }
-  currentTool          = tool;
-  canvas.isDrawingMode = (tool === 'freehand');
-  canvas.selection     = (tool === 'select');
+  S.currentTool          = tool;
+  S.canvas.isDrawingMode = (tool === 'freehand');
+  S.canvas.selection     = (tool === 'select');
 
   if (tool === 'hand') {
-    canvas.defaultCursor = 'grab';
-    canvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+    S.canvas.defaultCursor = 'grab';
+    S.canvas.forEachObject(o => { o.selectable = false; o.evented = false; });
     document.body.classList.add('tool-hand-active');
   } else {
-    canvas.defaultCursor = (tool === 'select') ? 'default' : 'crosshair';
-    canvas.forEachObject(o => {
+    S.canvas.defaultCursor = (tool === 'select') ? 'default' : 'crosshair';
+    S.canvas.forEachObject(o => {
       o.selectable = (tool === 'select') && o.visible && !o.locked;
       o.evented    = (tool === 'select') && o.visible && !o.locked;
     });
@@ -53,8 +53,8 @@ function activateTool(tool) {
   }
 
   if (tool === 'freehand') {
-    canvas.freeDrawingBrush.color = getColor();
-    canvas.freeDrawingBrush.width = getWidth();
+    S.canvas.freeDrawingBrush.color = getColor();
+    S.canvas.freeDrawingBrush.width = getWidth();
   }
 
   // Eigenschaften-Sektionen anzeigen
@@ -84,8 +84,8 @@ function activateTool(tool) {
   _updateMobTools(tool);
 
   // Eigenschaften-Panel automatisch einblenden (nicht bei Hand-Tool)
-  if (tool !== 'hand' && !panelStates['props'].open) {
-    panelStates['props'].open = true;
+  if (tool !== 'hand' && !S.panelStates['props'].open) {
+    S.panelStates['props'].open = true;
     applyPanel('props');
     savePanelStates();
   }
@@ -93,30 +93,30 @@ function activateTool(tool) {
 
 function deactivateTool() {
   // Polyline abbrechen wenn Werkzeug gewechselt wird
-  if (currentTool === 'polyline') {
+  if (S.currentTool === 'polyline') {
     _polyCleanPreview();
     // Temporäre Segmente entfernen und Polyline fertigstellen
-    if (_polyPts.length >= 2) _polyFinish();
+    if (S._polyPts.length >= 2) _polyFinish();
     else {
-      canvas.getObjects().filter(o => o._polyTmp).forEach(o => canvas.remove(o));
-      _polyPts = []; _polyLinkId = null;
+      S.canvas.getObjects().filter(o => o._polyTmp).forEach(o => S.canvas.remove(o));
+      S._polyPts = []; S._polyLinkId = null;
     }
   }
   clearTextPreview();
-  currentTool          = null;
-  canvas.isDrawingMode = false;
-  canvas.selection     = false;
-  canvas.defaultCursor = 'default';
-  canvas.forEachObject(o => { o.selectable = false; o.evented = false; });
-  canvas.discardActiveObject();
-  canvas.renderAll();
+  S.currentTool          = null;
+  S.canvas.isDrawingMode = false;
+  S.canvas.selection     = false;
+  S.canvas.defaultCursor = 'default';
+  S.canvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+  S.canvas.discardActiveObject();
+  S.canvas.renderAll();
   document.body.classList.remove('tool-hand-active');
-  isPanning = false;
+  S.isPanning = false;
   document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('statusTool').textContent = 'Kein Werkzeug';
 
   // Eigenschaften-Panel automatisch ausblenden
-  panelStates['props'].open = false;
+  S.panelStates['props'].open = false;
   applyPanel('props');
   savePanelStates();
 }
@@ -127,10 +127,10 @@ function getFontSize() { return parseInt(document.getElementById('fontSize').val
 function getFontFamily() { return document.getElementById('propFontFamily').value || 'monospace'; }
 
 document.getElementById('lineWidth').addEventListener('input', function () {
-  if (canvas.isDrawingMode) canvas.freeDrawingBrush.width = getWidth();
+  if (S.canvas.isDrawingMode) S.canvas.freeDrawingBrush.width = getWidth();
 });
 document.getElementById('colorPicker').addEventListener('input', () => {
-  if (canvas.isDrawingMode) canvas.freeDrawingBrush.color = getColor();
+  if (S.canvas.isDrawingMode) S.canvas.freeDrawingBrush.color = getColor();
 });
 
 

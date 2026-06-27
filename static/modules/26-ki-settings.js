@@ -36,17 +36,17 @@ const KI_PROVIDERS = {
   },
 };
 
-let kiSettings = { endpoint: '', apiKey: '', model: '', provider: '', template: '', thinking: false, thinkingBudget: 8000 };
+S.kiSettings = { endpoint: '', apiKey: '', model: '', provider: '', template: '', thinking: false, thinkingBudget: 8000 };
 
 function loadKiSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(KI_STORAGE_KEY));
-    if (s) kiSettings = { ...kiSettings, ...s };
+    if (s) S.kiSettings = { ...kiSettings, ...s };
   } catch (_) {}
 }
 
 function saveKiSettings() {
-  try { localStorage.setItem(KI_STORAGE_KEY, JSON.stringify(kiSettings)); } catch (_) {}
+  try { localStorage.setItem(KI_STORAGE_KEY, JSON.stringify(S.kiSettings)); } catch (_) {}
 }
 
 function detectKiProvider(endpoint) {
@@ -58,22 +58,22 @@ function detectKiProvider(endpoint) {
 }
 
 function populateKiSettings() {
-  document.getElementById('kiEndpoint').value     = kiSettings.endpoint || '';
-  document.getElementById('kiApiKey').value       = kiSettings.apiKey   || '';
-  document.getElementById('kiTemplate').value     = kiSettings.template || '';
-  document.getElementById('kiThinkingEnabled').checked = !!kiSettings.thinking;
-  document.getElementById('kiThinkingBudget').value    = kiSettings.thinkingBudget || 8000;
-  _updateThinkingVisibility(detectKiProvider(kiSettings.endpoint) || kiSettings.provider);
+  document.getElementById('kiEndpoint').value     = S.kiSettings.endpoint || '';
+  document.getElementById('kiApiKey').value       = S.kiSettings.apiKey   || '';
+  document.getElementById('kiTemplate').value     = S.kiSettings.template || '';
+  document.getElementById('kiThinkingEnabled').checked = !!S.kiSettings.thinking;
+  document.getElementById('kiThinkingBudget').value    = S.kiSettings.thinkingBudget || 8000;
+  _updateThinkingVisibility(detectKiProvider(S.kiSettings.endpoint) || S.kiSettings.provider);
   // Preset-Buttons markieren
-  const prov = detectKiProvider(kiSettings.endpoint);
+  const prov = detectKiProvider(S.kiSettings.endpoint);
   document.querySelectorAll('.ki-preset-btn').forEach(b => {
     b.classList.toggle('ki-preset-active', b.dataset.provider === prov);
   });
   // Modell-Dropdown befüllen falls gespeichert
-  if (kiSettings.model) {
+  if (S.kiSettings.model) {
     const sel = document.getElementById('kiModel');
-    sel.innerHTML = `<option value="${kiSettings.model}">${kiSettings.model}</option>`;
-    sel.value = kiSettings.model;
+    sel.innerHTML = `<option value="${S.kiSettings.model}">${S.kiSettings.model}</option>`;
+    sel.value = S.kiSettings.model;
     sel.disabled = false;
   }
   updateKiPanel();
@@ -114,7 +114,7 @@ async function loadKiModels() {
     if (!models.length) throw new Error('Keine Modelle gefunden');
 
     sel.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
-    if (kiSettings.model && models.includes(kiSettings.model)) sel.value = kiSettings.model;
+    if (S.kiSettings.model && models.includes(S.kiSettings.model)) sel.value = S.kiSettings.model;
     sel.disabled = false;
     status.textContent = `✓ ${models.length} Modelle`;
   } catch (e) {
@@ -187,13 +187,13 @@ async function testKiConnection() {
 document.getElementById('kiTestBtn').addEventListener('click', testKiConnection);
 
 document.getElementById('kiSaveBtn').addEventListener('click', () => {
-  kiSettings.endpoint       = document.getElementById('kiEndpoint').value.trim().replace(/\/$/, '');
-  kiSettings.apiKey         = document.getElementById('kiApiKey').value.trim();
-  kiSettings.model          = document.getElementById('kiModel').value;
-  kiSettings.template       = document.getElementById('kiTemplate').value;
-  kiSettings.provider       = detectKiProvider(kiSettings.endpoint) || 'custom';
-  kiSettings.thinking       = document.getElementById('kiThinkingEnabled').checked;
-  kiSettings.thinkingBudget = parseInt(document.getElementById('kiThinkingBudget').value) || 8000;
+  S.kiSettings.endpoint       = document.getElementById('kiEndpoint').value.trim().replace(/\/$/, '');
+  S.kiSettings.apiKey         = document.getElementById('kiApiKey').value.trim();
+  S.kiSettings.model          = document.getElementById('kiModel').value;
+  S.kiSettings.template       = document.getElementById('kiTemplate').value;
+  S.kiSettings.provider       = detectKiProvider(S.kiSettings.endpoint) || 'custom';
+  S.kiSettings.thinking       = document.getElementById('kiThinkingEnabled').checked;
+  S.kiSettings.thinkingBudget = parseInt(document.getElementById('kiThinkingBudget').value) || 8000;
   saveKiSettings();
   updateKiPanel();
   closeSettings();

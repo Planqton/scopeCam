@@ -37,7 +37,7 @@ document.getElementById('mobSaveBtn').addEventListener('click', () => saveProjec
 
 // KI-Button in der Top-Bar
 document.getElementById('mobKiBtn').addEventListener('click', () => {
-  const st = panelStates['ki'];
+  const st = S.panelStates['ki'];
   st.open = !st.open;
   applyPanel('ki');
   savePanelStates();
@@ -48,12 +48,12 @@ _mobBtn('mob_saveAs',      () => saveProjectAs());
 _mobBtn('mob_open',        () => openFileManager('open'));
 _mobBtn('mob_export',      () => document.getElementById('exportBtn').click());
 _mobBtn('mob_fm',          () => openFileManager('browse'));
-_mobBtn('mob_undo',        () => { if (historyIdx > 0) restoreHistory(historyIdx - 1); });
-_mobBtn('mob_redo',        () => { if (historyIdx < history.length - 1) restoreHistory(historyIdx + 1); });
-_mobBtn('mob_delete',      () => { const o = canvas.getActiveObject(); if (o) { canvas.remove(o); saveHistory('Gelöscht'); }});
-_mobBtn('mob_clearAll',    () => { canvas.clear(); saveHistory('Alle gelöscht'); });
-_mobBtn('mob_ki',          () => { panelStates['ki'].open = !panelStates['ki'].open; applyPanel('ki'); savePanelStates(); });
-_mobBtn('mob_timeline',    () => { panelStates['timeline'].open = !panelStates['timeline'].open; applyPanel('timeline'); savePanelStates(); });
+_mobBtn('mob_undo',        () => { if (S.historyIdx > 0) restoreHistory(S.historyIdx - 1); });
+_mobBtn('mob_redo',        () => { if (S.historyIdx < S.history.length - 1) restoreHistory(S.historyIdx + 1); });
+_mobBtn('mob_delete',      () => { const o = S.canvas.getActiveObject(); if (o) { S.canvas.remove(o); saveHistory('Gelöscht'); }});
+_mobBtn('mob_clearAll',    () => { S.canvas.clear(); saveHistory('Alle gelöscht'); });
+_mobBtn('mob_ki',          () => { S.panelStates['ki'].open = !S.panelStates['ki'].open; applyPanel('ki'); savePanelStates(); });
+_mobBtn('mob_timeline',    () => { S.panelStates['timeline'].open = !S.panelStates['timeline'].open; applyPanel('timeline'); savePanelStates(); });
 _mobBtn('mob_settings',    () => document.getElementById('openSettingsPage').click());
 
 // ── Mobile Panel Overlays ──────────────────────────────────────────────────
@@ -62,9 +62,9 @@ const _applyPanelOrig = applyPanel;
 applyPanel = function(id) {
   _applyPanelOrig(id);
   if (!_isMobile()) return;
-  const el = panelElCache[id];
+  const el = S.panelElCache[id];
   if (!el) return;
-  const st = panelStates[id];
+  const st = S.panelStates[id];
   if (st && st.open) {
     document.body.appendChild(el);
     // Inline-Styles entfernen damit CSS-Klasse greift
@@ -99,9 +99,9 @@ document.addEventListener('click', e => {
         dist:  Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
         midX:  (a.clientX + b.clientX) / 2,
         midY:  (a.clientY + b.clientY) / 2,
-        zoom:  zoomLevel,
-        panX:  panX,
-        panY:  panY,
+        zoom:  S.zoomLevel,
+        panX:  S.panX,
+        panY:  S.panY,
       };
     } else {
       _t0 = null;
@@ -116,9 +116,9 @@ document.addEventListener('click', e => {
       const scale = dist / _t0.dist;
       const midX  = (a.clientX + b.clientX) / 2;
       const midY  = (a.clientY + b.clientY) / 2;
-      zoomLevel = Math.max(0.1, Math.min(5, _t0.zoom * scale));
-      panX = _t0.panX + (midX - _t0.midX);
-      panY = _t0.panY + (midY - _t0.midY);
+      S.zoomLevel = Math.max(0.1, Math.min(5, _t0.zoom * scale));
+      S.panX = _t0.panX + (midX - _t0.midX);
+      S.panY = _t0.panY + (midY - _t0.midY);
       applyTransform();
     }
   }, { passive: false });
@@ -129,17 +129,17 @@ document.addEventListener('click', e => {
 
 // ── Top-Bar Undo/Redo ──────────────────────────────────────────────────────
 document.getElementById('mobUndoBtn').addEventListener('click', () => {
-  if (historyIdx > 0) restoreHistory(historyIdx - 1);
+  if (S.historyIdx > 0) restoreHistory(S.historyIdx - 1);
 });
 document.getElementById('mobRedoBtn').addEventListener('click', () => {
-  if (historyIdx < history.length - 1) restoreHistory(historyIdx + 1);
+  if (S.historyIdx < S.history.length - 1) restoreHistory(S.historyIdx + 1);
 });
 
 init();
 
 // Auto-Speichern alle 2 Minuten wenn dirty und Pfad gesetzt
 setInterval(() => {
-  if (currentSavePath && _isDirty()) {
+  if (S.currentSavePath && _isDirty()) {
     saveProject().then(() => setStatus('Auto-gespeichert'));
   }
 }, 2 * 60 * 1000);

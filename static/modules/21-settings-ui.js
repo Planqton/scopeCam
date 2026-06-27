@@ -99,26 +99,26 @@ async function populateSettings() {
   const demoOpt       = document.createElement('option');
   demoOpt.value       = 'demo';
   demoOpt.textContent = 'Demo (PCB-Testbild)';
-  if (settings.device === 'demo') demoOpt.selected = true;
+  if (S.settings.device === 'demo') demoOpt.selected = true;
   sel.appendChild(demoOpt);
 
   devices.forEach(d => {
     const opt       = document.createElement('option');
     opt.value       = d.path;
     opt.textContent = `${d.path}  (${d.name})`;
-    if (d.path === settings.device) opt.selected = true;
+    if (d.path === S.settings.device) opt.selected = true;
     sel.appendChild(opt);
   });
 
-  document.getElementById('jpegQuality').value      = settings.jpeg_quality   ?? 70;
-  document.getElementById('qualityVal').textContent  = settings.jpeg_quality   ?? 70;
-  document.getElementById('streamScale').value       = settings.stream_scale   ?? 0.5;
-  document.getElementById('maxFps').value            = settings.max_fps        ?? 25;
-  document.getElementById('maxFpsVal').textContent   = settings.max_fps        ?? 25;
-  document.getElementById('scalePxMm').value         = settings.scale_px_per_mm ?? '';
-  document.getElementById('rulerUnit').value         = settings.ruler_unit     ?? 'px';
-  document.getElementById('flipH').checked           = settings.flip_h         ?? false;
-  document.getElementById('flipV').checked           = settings.flip_v         ?? false;
+  document.getElementById('jpegQuality').value      = S.settings.jpeg_quality   ?? 70;
+  document.getElementById('qualityVal').textContent  = S.settings.jpeg_quality   ?? 70;
+  document.getElementById('streamScale').value       = S.settings.stream_scale   ?? 0.5;
+  document.getElementById('maxFps').value            = S.settings.max_fps        ?? 25;
+  document.getElementById('maxFpsVal').textContent   = S.settings.max_fps        ?? 25;
+  document.getElementById('scalePxMm').value         = S.settings.scale_px_per_mm ?? '';
+  document.getElementById('rulerUnit').value         = S.settings.ruler_unit     ?? 'px';
+  document.getElementById('flipH').checked           = S.settings.flip_h         ?? false;
+  document.getElementById('flipV').checked           = S.settings.flip_v         ?? false;
   document.getElementById('arrowStep').value         = localStorage.getItem('scopecam_arrow_step') || '1';
   _updateCapturePathDisplay();
 }
@@ -140,18 +140,18 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updated),
   });
-  settings = await res.json();
+  S.settings = await res.json();
   updateScaleStatus();
   // Nur bei Kamera-Tabs die Device-Pipeline neu starten
-  const tab = tabById(activeTabId);
+  const tab = tabById(S.activeTabId);
   if (!tab?.backgroundDataUrl) applyDevice();
   closeSettings();
   drawRulers();
 });
 
 function updateScaleStatus() {
-  document.getElementById('statusScale').textContent = settings.scale_px_per_mm
-    ? `Skalierung: ${settings.scale_px_per_mm} px/mm` : '';
+  document.getElementById('statusScale').textContent = S.settings.scale_px_per_mm
+    ? `Skalierung: ${S.settings.scale_px_per_mm} px/mm` : '';
 }
 
 

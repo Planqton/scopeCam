@@ -2,10 +2,10 @@
 // PCB LIVE-SNAP (Beta)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let pcbLiveSnapEnabled = (() => {
+S.pcbLiveSnapEnabled = (() => {
   try { const p = JSON.parse(localStorage.getItem('scopecam_pcblive_v1')); return !!(p?.enabled); } catch(_) { return false; }
 })();
-document.getElementById('pcbLiveSnapCheckmark').textContent = pcbLiveSnapEnabled ? '✓' : '';
+document.getElementById('pcbLiveSnapCheckmark').textContent = S.pcbLiveSnapEnabled ? '✓' : '';
 
 // PCB-Snap-Einstellungen aus localStorage
 (function() {
@@ -22,7 +22,7 @@ document.getElementById('pcbLiveSnapCheckmark').textContent = pcbLiveSnapEnabled
 function _savePcbLiveSettings() {
   try {
     localStorage.setItem('scopecam_pcblive_v1', JSON.stringify({
-      enabled: pcbLiveSnapEnabled, search: PCB_SNAP_SEARCH, grad: PCB_SNAP_MIN_GRAD
+      enabled: S.pcbLiveSnapEnabled, search: PCB_SNAP_SEARCH, grad: PCB_SNAP_MIN_GRAD
     }));
   } catch(_) {}
 }
@@ -105,8 +105,8 @@ function _sampleGradient(ctx, axis, pos, start, end) {
   }
 }
 
-canvas.on('object:moving', e => {
-  if (!pcbLiveSnapEnabled || _snapSkipActive || axisLock) return;
+S.canvas.on('object:moving', e => {
+  if (!S.pcbLiveSnapEnabled || S._snapSkipActive || S.axisLock) return;
   const obj = e.target;
   const vc  = document.getElementById('videoCanvas');
   if (!vc.width) return;

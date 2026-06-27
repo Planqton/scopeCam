@@ -6,35 +6,35 @@
 // objVisible-Flag (custom prop). Echte Canvas-Sichtbarkeit = layer.visible && objVisible.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let layers = []; // Aktive Ebenen des offenen Tabs
+S.layers = []; // Aktive Ebenen des offenen Tabs
 
 function ensureLayers() {
-  if (!Array.isArray(layers)) layers = [];
-  const def = layers.find(l => l.id === 'default');
+  if (!Array.isArray(S.layers)) S.layers = [];
+  const def = S.layers.find(l => l.id === 'default');
   if (!def) {
-    layers.unshift({ id: 'default', name: 'Ebene 1', visible: true, collapsed: false });
+    S.layers.unshift({ id: 'default', name: 'Ebene 1', visible: true, collapsed: false });
   } else if (def.name === 'Standard') {
     def.name = 'Ebene 1'; // Migration alter Zustand
   }
 }
 
 function saveCurrentTabLayers() {
-  const tab = tabById(activeTabId);
-  if (tab) { tab.layers = JSON.parse(JSON.stringify(layers)); saveTabs(); }
+  const tab = tabById(S.activeTabId);
+  if (tab) { tab.layers = JSON.parse(JSON.stringify(S.layers)); saveTabs(); }
 }
 
 function loadLayersFromTab(tab) {
-  layers = (tab?.layers && tab.layers.length > 0) ? JSON.parse(JSON.stringify(tab.layers)) : [];
+  S.layers = (tab?.layers && tab.layers.length > 0) ? JSON.parse(JSON.stringify(tab.layers)) : [];
   ensureLayers();
 }
 
 function createLayer(name) {
   ensureLayers();
-  const lname = name || ('Ebene ' + layers.length);
+  const lname = name || ('Ebene ' + S.layers.length);
   const layer = { id: 'layer_' + Date.now(), name: lname, visible: true, collapsed: false };
-  layers.push(layer);
+  S.layers.push(layer);
   saveCurrentTabLayers();
-  _nextLabel = `Ebene "${lname}" erstellt`;
+  S._nextLabel = `Ebene "${lname}" erstellt`;
   saveHistory();
   refreshLayersList();
   return layer;
@@ -42,56 +42,56 @@ function createLayer(name) {
 
 function deleteLayer(layerId) {
   if (layerId === 'default') return;
-  if (layers.length <= 1) return;
-  const lname = layers.find(l => l.id === layerId)?.name || layerId;
-  canvas.getObjects().forEach(obj => { if ((obj.layerId || 'default') === layerId) obj.layerId = 'default'; });
-  layers = layers.filter(l => l.id !== layerId);
+  if (S.layers.length <= 1) return;
+  const lname = S.layers.find(l => l.id === layerId)?.name || layerId;
+  S.canvas.getObjects().forEach(obj => { if ((obj.layerId || 'default') === layerId) obj.layerId = 'default'; });
+  S.layers = S.layers.filter(l => l.id !== layerId);
   ensureLayers();
   saveCurrentTabLayers();
-  _nextLabel = `Ebene "${lname}" gelöscht`;
+  S._nextLabel = `Ebene "${lname}" gelöscht`;
   saveHistory();
   refreshLayersList();
 }
 
 function setLayerVisible(layerId, visible) {
-  const layer = layers.find(l => l.id === layerId);
+  const layer = S.layers.find(l => l.id === layerId);
   if (!layer) return;
   layer.visible = visible;
-  canvas.getObjects().forEach(obj => {
+  S.canvas.getObjects().forEach(obj => {
     if ((obj.layerId || 'default') === layerId) {
       obj.visible    = visible && (obj.objVisible !== false);
-      obj.selectable = obj.visible && !obj.locked && currentTool === 'select';
+      obj.selectable = obj.visible && !obj.locked && S.currentTool === 'select';
       obj.evented    = obj.selectable;
     }
   });
-  canvas.renderAll();
+  S.canvas.renderAll();
   saveCurrentTabLayers();
   refreshLayersList();
 }
 
 function setObjectVisible(obj, visible) {
   obj.objVisible     = visible;
-  const layer        = layers.find(l => l.id === (obj.layerId || 'default'));
+  const layer        = S.layers.find(l => l.id === (obj.layerId || 'default'));
   const layerVisible = layer ? layer.visible : true;
   obj.visible        = layerVisible && visible;
-  obj.selectable     = obj.visible && !obj.locked && currentTool === 'select';
+  obj.selectable     = obj.visible && !obj.locked && S.currentTool === 'select';
   obj.evented        = obj.selectable;
-  if (!obj.visible && canvas.getActiveObjects().includes(obj)) {
-    canvas.discardActiveObject();
+  if (!obj.visible && S.canvas.getActiveObjects().includes(obj)) {
+    S.canvas.discardActiveObject();
   }
-  canvas.renderAll();
+  S.canvas.renderAll();
   saveHistory();
   refreshLayersList();
 }
 
 function moveObjectToLayer(obj, layerId) {
   obj.layerId = layerId;
-  const layer        = layers.find(l => l.id === layerId);
+  const layer        = S.layers.find(l => l.id === layerId);
   const layerVisible = layer ? layer.visible : true;
   obj.visible        = layerVisible && (obj.objVisible !== false);
-  obj.selectable     = obj.visible && !obj.locked && currentTool === 'select';
+  obj.selectable     = obj.visible && !obj.locked && S.currentTool === 'select';
   obj.evented        = obj.selectable;
-  canvas.renderAll();
+  S.canvas.renderAll();
   saveHistory();
   refreshLayersList();
 }
@@ -208,20 +208,20 @@ function makeLayerNameEditor(nameEl, layer) {
 function refreshLayersList() {
   ensureLayers();
   const list    = document.getElementById('layersList');
-  const objects = canvas.getObjects();
-  const active  = new Set(canvas.getActiveObjects());
+  const objects = S.canvas.getObjects();
+  const active  = new Set(S.canvas.getActiveObjects());
   list.innerHTML = '';
 
   // Objekte nach Ebene gruppieren
   const byLayer = {};
-  layers.forEach(l => (byLayer[l.id] = []));
+  S.layers.forEach(l => (byLayer[l.id] = []));
   objects.forEach(obj => {
     const lid = obj.layerId || 'default';
     if (!byLayer[lid]) byLayer[lid] = [];
     byLayer[lid].push(obj);
   });
 
-  layers.forEach(layer => {
+  S.layers.forEach(layer => {
     const layerObjs = (byLayer[layer.id] || []).slice().reverse(); // oberster zuerst
 
     // ── Ebenen-Header ───────────────────────────────────────────
@@ -263,7 +263,7 @@ function refreshLayersList() {
         '-',
         { label: '+ Neue Ebene',            action: () => createLayer() },
         '-',
-        { label: '🗑 Ebene löschen', disabled: layer.id === 'default' || layers.length <= 1,
+        { label: '🗑 Ebene löschen', disabled: layer.id === 'default' || S.layers.length <= 1,
                                              action: () => deleteLayer(layer.id) },
       ]);
     });
@@ -290,10 +290,10 @@ function refreshLayersList() {
       lockBtn.addEventListener('click', e => {
         e.stopPropagation();
         obj.locked     = !obj.locked;
-        obj.selectable = !obj.locked && obj.visible && currentTool === 'select';
+        obj.selectable = !obj.locked && obj.visible && S.currentTool === 'select';
         obj.evented    = obj.selectable;
-        canvas.discardActiveObject();
-        canvas.renderAll();
+        S.canvas.discardActiveObject();
+        S.canvas.renderAll();
         saveHistory();
         refreshLayersList();
       });
@@ -307,7 +307,7 @@ function refreshLayersList() {
         e.stopPropagation();
         obj.lockPosition = !obj.lockPosition;
         _applyObjLocks(obj);
-        canvas.renderAll();
+        S.canvas.renderAll();
         saveHistory();
         refreshLayersList();
       });
@@ -321,7 +321,7 @@ function refreshLayersList() {
         e.stopPropagation();
         obj.lockSize = !obj.lockSize;
         _applyObjLocks(obj);
-        canvas.renderAll();
+        S.canvas.renderAll();
         saveHistory();
         refreshLayersList();
       });
@@ -343,8 +343,8 @@ function refreshLayersList() {
       upBtn.disabled    = idx === objects.length - 1;
       upBtn.addEventListener('click', e => {
         e.stopPropagation();
-        canvas.bringForward(obj);
-        canvas.renderAll();
+        S.canvas.bringForward(obj);
+        S.canvas.renderAll();
         refreshLayersList();
       });
 
@@ -355,8 +355,8 @@ function refreshLayersList() {
       downBtn.disabled    = idx === 0;
       downBtn.addEventListener('click', e => {
         e.stopPropagation();
-        canvas.sendBackwards(obj);
-        canvas.renderAll();
+        S.canvas.sendBackwards(obj);
+        S.canvas.renderAll();
         refreshLayersList();
       });
 
@@ -381,17 +381,17 @@ function refreshLayersList() {
       // Objekt-Manager-Klick: wählt NUR dieses Objekt (kein Gruppenexpand)
       item.addEventListener('click', () => {
         if (obj.locked || !obj.visible) return;
-        if (currentTool !== 'select') document.querySelector('[data-tool="select"]')?.click();
-        _suppressLinkExpand = true;
-        canvas.setActiveObject(obj);
-        canvas.renderAll();
-        _suppressLinkExpand = false;
+        if (S.currentTool !== 'select') document.querySelector('[data-tool="select"]')?.click();
+        S._suppressLinkExpand = true;
+        S.canvas.setActiveObject(obj);
+        S.canvas.renderAll();
+        S._suppressLinkExpand = false;
         updatePropsPanel();
         refreshLayersList();
       });
 
       item.addEventListener('contextmenu', e => {
-        const otherLayers = layers.filter(l => l.id !== (obj.layerId || 'default'));
+        const otherLayers = S.layers.filter(l => l.id !== (obj.layerId || 'default'));
         const moveItems   = otherLayers.length > 0
           ? ['-', ...otherLayers.map(l => ({ label: '📁 → ' + l.name, action: () => moveObjectToLayer(obj, l.id) }))]
           : [];
@@ -404,7 +404,7 @@ function refreshLayersList() {
           ...linkItems,
           ...moveItems,
           '-',
-          { label: '🗑 Löschen', action: () => { canvas.remove(obj); canvas.renderAll(); _nextLabel='Gelöscht'; saveHistory(); } },
+          { label: '🗑 Löschen', action: () => { S.canvas.remove(obj); S.canvas.renderAll(); S._nextLabel='Gelöscht'; saveHistory(); } },
         ]);
       });
 
@@ -431,8 +431,8 @@ function refreshLayersList() {
 
   // ── Hilfslinien-Sektion ──────────────────────────────────────────────────────
   const allGuides = [
-    ...guideLines.h.map((pos, i) => ({ axis: 'h', idx: i, pos })),
-    ...guideLines.v.map((pos, i) => ({ axis: 'v', idx: i, pos })),
+    ...S.guideLines.h.map((pos, i) => ({ axis: 'h', idx: i, pos })),
+    ...S.guideLines.v.map((pos, i) => ({ axis: 'v', idx: i, pos })),
   ];
 
   const guidesSep = document.createElement('div');
@@ -441,7 +441,7 @@ function refreshLayersList() {
   guidesSep.style.userSelect = 'none';
   const guideArrow = document.createElement('span');
   guideArrow.style.cssText = 'margin-right:4px;font-size:10px;display:inline-block;width:10px';
-  guideArrow.textContent = _guidesCollapsed ? '▶' : '▼';
+  guideArrow.textContent = S._guidesCollapsed ? '▶' : '▼';
   const guideBadge = document.createElement('span');
   guideBadge.style.cssText = 'margin-left:4px;opacity:.55;font-size:10px';
   if (allGuides.length) guideBadge.textContent = `(${allGuides.length})`;
@@ -449,13 +449,13 @@ function refreshLayersList() {
   guidesSep.appendChild(document.createTextNode('Hilfslinien'));
   guidesSep.appendChild(guideBadge);
   guidesSep.addEventListener('click', () => {
-    _guidesCollapsed = !_guidesCollapsed;
+    S._guidesCollapsed = !S._guidesCollapsed;
     _saveGuidesCollapsed();
     refreshLayersList();
   });
   list.appendChild(guidesSep);
 
-  if (!_guidesCollapsed) {
+  if (!S._guidesCollapsed) {
   if (allGuides.length === 0) {
     const hint = document.createElement('div');
     hint.className   = 'layer-empty-hint';
@@ -472,7 +472,7 @@ function refreshLayersList() {
       delBtn.textContent = '✕';
       delBtn.addEventListener('click', e => {
         e.stopPropagation();
-        guideLines[axis].splice(idx, 1);
+        S.guideLines[axis].splice(idx, 1);
         saveGuides(); drawGuides(); refreshLayersList();
       });
 
@@ -494,17 +494,17 @@ function refreshLayersList() {
       list.appendChild(item);
     });
   }
-  } // end if (!_guidesCollapsed)
+  } // end if (!S._guidesCollapsed)
 }
 
-canvas.on('object:added', e => {
+S.canvas.on('object:added', e => {
   const o = e.target;
   if (!o.objId) o.objId = crypto.randomUUID();
   // Auswahl nur mit Auswahl-Werkzeug erlauben
-  const isSelect = currentTool === 'select';
+  const isSelect = S.currentTool === 'select';
   if (!isSelect) { o.selectable = false; o.evented = false; }
   refreshLayersList();
 });
-canvas.on('object:removed', refreshLayersList);
+S.canvas.on('object:removed', refreshLayersList);
 
 

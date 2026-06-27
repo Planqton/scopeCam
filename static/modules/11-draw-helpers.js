@@ -12,20 +12,20 @@ function addArrow(x1, y1, x2, y2, color, strokeWidth) {
     originX: 'center', originY: 'center',
   });
   const grp = new fabric.Group([line, head], { selectable: true, evented: true });
-  canvas.add(grp);
+  S.canvas.add(grp);
   return grp;
 }
 
 function getDimAutoLabel(px) {
-  return settings.scale_px_per_mm
-    ? (px / settings.scale_px_per_mm).toFixed(2) + ' mm'
+  return S.settings.scale_px_per_mm
+    ? (px / S.settings.scale_px_per_mm).toFixed(2) + ' mm'
     : Math.round(px) + ' px';
 }
 
 function applyDimLabel(obj) {
   const label = obj.dimLabelOverride || getDimAutoLabel(obj.dimPx || 0);
   const textObj = obj._objects?.find(o => o.type === 'text');
-  if (textObj) { textObj.set('text', label); obj.dirty = true; canvas.renderAll(); }
+  if (textObj) { textObj.set('text', label); obj.dirty = true; S.canvas.renderAll(); }
 }
 
 function addDimension(x1, y1, x2, y2, color, strokeWidth) {
@@ -48,7 +48,7 @@ function addDimension(x1, y1, x2, y2, color, strokeWidth) {
   grp.isDimension = true;
   grp.dimPx = dist;
   grp.dimLabelOverride = null;
-  canvas.add(grp);
+  S.canvas.add(grp);
   return grp;
 }
 

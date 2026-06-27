@@ -1,5 +1,5 @@
 // ── Copy / Paste / Duplicate ─────────────────────────────────────────────────
-let _clipboard = null;
+S._clipboard = null;
 
 // Weist geklonten Objekten neue objId + remappte linkGroup-UUIDs zu
 function _freshIds(cloned) {
@@ -16,42 +16,42 @@ function _freshIds(cloned) {
 }
 
 function copySelected() {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (!objs.length) return;
-  const active = canvas.getActiveObject();
+  const active = S.canvas.getActiveObject();
   active.clone(cloned => {
-    _clipboard = cloned;
+    S._clipboard = cloned;
     setStatus(`${objs.length} Objekt${objs.length > 1 ? 'e' : ''} kopiert`);
   }, CUSTOM_PROPS);
 }
 
 function _addClonedToCanvas(cloned, label, statusMsg) {
-  canvas.discardActiveObject();
+  S.canvas.discardActiveObject();
   cloned.set({ left: cloned.left + 20, top: cloned.top + 20 });
   _freshIds(cloned);
   if (typeof cloned.forEachObject === 'function') {
-    cloned.canvas = canvas;
-    cloned.forEachObject(o => canvas.add(o));
+    cloned.canvas = S.canvas;
+    cloned.forEachObject(o => S.canvas.add(o));
     cloned.setCoords();
   } else {
-    canvas.add(cloned);
+    S.canvas.add(cloned);
   }
-  canvas.setActiveObject(cloned);
-  canvas.requestRenderAll();
-  _nextLabel = label;
+  S.canvas.setActiveObject(cloned);
+  S.canvas.requestRenderAll();
+  S._nextLabel = label;
   saveHistory();
   refreshLayersList();
   if (statusMsg) setStatus(statusMsg);
 }
 
 function pasteClipboard() {
-  if (!_clipboard) return;
-  _clipboard.clone(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'), CUSTOM_PROPS);
+  if (!S._clipboard) return;
+  S._clipboard.clone(cloned => _addClonedToCanvas(cloned, 'Einfügen', 'Eingefügt'), CUSTOM_PROPS);
 }
 
 function duplicateSelected() {
-  if (!canvas.getActiveObjects().length) return;
-  canvas.getActiveObject().clone(cloned => _addClonedToCanvas(cloned, 'Dupliziert'), CUSTOM_PROPS);
+  if (!S.canvas.getActiveObjects().length) return;
+  S.canvas.getActiveObject().clone(cloned => _addClonedToCanvas(cloned, 'Dupliziert'), CUSTOM_PROPS);
 }
 
 document.getElementById('copyBtn').addEventListener('click', copySelected);
@@ -60,7 +60,7 @@ document.getElementById('duplicateBtn').addEventListener('click', duplicateSelec
 
 // ── SVG-Export ───────────────────────────────────────────────────────────────
 function exportSVG() {
-  const svgData = canvas.toSVG();
+  const svgData = S.canvas.toSVG();
   const blob = new Blob([svgData], { type: 'image/svg+xml' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -74,7 +74,7 @@ document.getElementById('exportSvgBtn').addEventListener('click', exportSVG);
 
 // ── Alignment Tools ──────────────────────────────────────────────────────────
 function alignObjects(mode) {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (objs.length < 2) return;
   // getBoundingRect gibt achsenparallele Box — Delta-Ansatz funktioniert auch für rotierte Objekte:
   // obj.left += (zielBbKante - aktBbKante)
@@ -131,8 +131,8 @@ function alignObjects(mode) {
     }
   }
   objs.forEach(o => o.setCoords());
-  canvas.requestRenderAll();
-  _nextLabel = 'Ausgerichtet';
+  S.canvas.requestRenderAll();
+  S._nextLabel = 'Ausgerichtet';
   saveHistory();
 }
 
@@ -141,7 +141,7 @@ document.querySelectorAll('.align-btn').forEach(btn => {
 });
 
 // ── Snap to Object ───────────────────────────────────────────────────────────
-let _snapToObjEnabled = true; // kann per Einstellungen deaktiviert werden
+S._snapToObjEnabled = true; // kann per Einstellungen deaktiviert werden
 
 function _getSnapPoints(other) {
   const br = other.getBoundingRect(true);
@@ -163,8 +163,8 @@ function _getSnapPoints(other) {
   return pts;
 }
 
-canvas.on('object:moving', e => {
-  if (!_snapToObjEnabled || _snapSkipActive || axisLock) return;
+S.canvas.on('object:moving', e => {
+  if (!S._snapToObjEnabled || S._snapSkipActive || S.axisLock) return;
   const obj     = e.target;
   const SNAP    = 12;
   const myBr    = obj.getBoundingRect(true);
@@ -174,7 +174,7 @@ canvas.on('object:moving', e => {
   let bestDx = SNAP + 1, bestDy = SNAP + 1;
   let snapDx = 0, snapDy = 0;
 
-  canvas.getObjects().forEach(other => {
+  S.canvas.getObjects().forEach(other => {
     if (other === obj || !other.visible) return;
     for (const sp of _getSnapPoints(other)) {
       for (const mx of myPtsX) {
@@ -193,21 +193,21 @@ canvas.on('object:moving', e => {
 });
 
 // ── Polyline-Tool ─────────────────────────────────────────────────────────────
-let _polyPts          = [];
-let _polyPreviewLine  = null;
-let _polyLinkId       = null;
+S._polyPts          = [];
+S._polyPreviewLine  = null;
+S._polyLinkId       = null;
 
 function _polyCleanPreview() {
-  if (_polyPreviewLine) { canvas.remove(_polyPreviewLine); _polyPreviewLine = null; }
+  if (S._polyPreviewLine) { S.canvas.remove(S._polyPreviewLine); S._polyPreviewLine = null; }
 }
 
 function _polyFinish() {
   _polyCleanPreview();
   // Temporäre Segmente entfernen
-  canvas.getObjects().filter(o => o._polyTmp).forEach(o => canvas.remove(o));
-  if (_polyPts.length < 2) { _polyPts = []; _polyLinkId = null; canvas.renderAll(); return; }
-  const pts   = _polyPts;
-  const gid   = _polyLinkId || crypto.randomUUID();
+  S.canvas.getObjects().filter(o => o._polyTmp).forEach(o => S.canvas.remove(o));
+  if (S._polyPts.length < 2) { S._polyPts = []; S._polyLinkId = null; S.canvas.renderAll(); return; }
+  const pts   = S._polyPts;
+  const gid   = S._polyLinkId || crypto.randomUUID();
   const color = getColor();
   const sw    = getWidth();
   for (let i = 0; i < pts.length - 1; i++) {
@@ -218,12 +218,12 @@ function _polyFinish() {
     seg.objId      = crypto.randomUUID();
     seg.linkGroup  = gid;
     seg.customName = `Poly Seg${i + 1}`;
-    canvas.add(seg);
+    S.canvas.add(seg);
   }
-  _polyPts    = [];
-  _polyLinkId = null;
-  canvas.requestRenderAll();
-  _nextLabel  = 'Polylinie';
+  S._polyPts    = [];
+  S._polyLinkId = null;
+  S.canvas.requestRenderAll();
+  S._nextLabel  = 'Polylinie';
   saveHistory();
   refreshLayersList();
 }
@@ -231,11 +231,11 @@ function _polyFinish() {
 // Escape beim Polyline-Tool: laufende Linie abbrechen
 const _origEscHandler = document.addEventListener; // hook in keydown
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && currentTool === 'polyline') {
+  if (e.key === 'Escape' && S.currentTool === 'polyline') {
     _polyCleanPreview();
-    _polyPts    = [];
-    _polyLinkId = null;
-    canvas.renderAll();
+    S._polyPts    = [];
+    S._polyLinkId = null;
+    S.canvas.renderAll();
     // Tool bleibt aktiv (Escape handled by main handler deactivates it; that's fine)
   }
 });
@@ -269,5 +269,5 @@ document.getElementById('calibrateOkBtn').addEventListener('click', () => {
   applySettings();
   document.getElementById('calibrateModal').style.display = 'none';
   activateTool('select');
-  setStatus(`Kalibriert: ${settings.scale_px_per_mm.toFixed(2)} px/mm`);
+  setStatus(`Kalibriert: ${S.settings.scale_px_per_mm.toFixed(2)} px/mm`);
 });

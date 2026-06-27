@@ -10,18 +10,18 @@ let recordingRAF    = null;
 // Gibt ein composites Canvas-Element zurück (Video + optional Annotationen).
 function captureComposite(withObjects) {
   return new Promise(resolve => {
-    const w = videoCanvas.width  || videoCanvas.offsetWidth;
-    const h = videoCanvas.height || videoCanvas.offsetHeight;
+    const w = S.videoCanvas.width  || S.videoCanvas.offsetWidth;
+    const h = S.videoCanvas.height || S.videoCanvas.offsetHeight;
     if (!w || !h) { resolve(null); return; }
     const tmp = document.createElement('canvas');
     tmp.width = w; tmp.height = h;
     const ctx = tmp.getContext('2d');
-    try { ctx.drawImage(videoCanvas, 0, 0, w, h); } catch (_) {}
+    try { ctx.drawImage(S.videoCanvas, 0, 0, w, h); } catch (_) {}
     if (!withObjects) { resolve(tmp); return; }
     const overlay   = new Image();
     overlay.onload  = () => { ctx.drawImage(overlay, 0, 0); resolve(tmp); };
     overlay.onerror = () => resolve(tmp);
-    overlay.src     = canvas.toDataURL({ format: 'png', multiplier: 1 });
+    overlay.src     = S.canvas.toDataURL({ format: 'png', multiplier: 1 });
   });
 }
 
@@ -87,11 +87,11 @@ document.getElementById('snapToTabBtn').addEventListener('click', async () => {
   const dataUrl = tmp.toDataURL('image/jpeg', 0.9);
 
   // Aktuellen Tab sichern, dann neuen Snapshot-Tab erstellen
-  if (activeTabId) {
-    const cur = tabById(activeTabId);
+  if (S.activeTabId) {
+    const cur = tabById(S.activeTabId);
     if (cur) cur.canvasJSON = getCurrentTabCanvasJSON();
   }
-  const newTab = createTab('Snapshot ' + (tabs.length + 1), dataUrl, null);
+  const newTab = createTab('Snapshot ' + (S.tabs.length + 1), dataUrl, null);
   switchToTab(newTab.id);
 });
 
@@ -101,8 +101,8 @@ document.getElementById('recordBtn').addEventListener('click', () => {
 });
 
 function startRecording(withObjects) {
-  const w = videoCanvas.width  || videoCanvas.offsetWidth;
-  const h = videoCanvas.height || videoCanvas.offsetHeight;
+  const w = S.videoCanvas.width  || S.videoCanvas.offsetWidth;
+  const h = S.videoCanvas.height || S.videoCanvas.offsetHeight;
   if (!w || !h) return;
 
   const composite   = document.createElement('canvas');
@@ -136,8 +136,8 @@ function startRecording(withObjects) {
     if (!recordingActive) return;
     try {
       ctx.clearRect(0, 0, w, h);
-      ctx.drawImage(videoCanvas, 0, 0, w, h);
-      if (withObjects) ctx.drawImage(canvas.getElement(), 0, 0, w, h);
+      ctx.drawImage(S.videoCanvas, 0, 0, w, h);
+      if (withObjects) ctx.drawImage(S.canvas.getElement(), 0, 0, w, h);
     } catch (_) {}
     recordingRAF = requestAnimationFrame(renderFrame);
   };

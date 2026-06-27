@@ -103,7 +103,7 @@ cmd('design', 'design <name>','Design wechseln (dark/light/midnight/carbon/solar
 
 // --- OBJEKTE ---
 cmd('list', 'list [filter]', 'Alle Canvas-Objekte auflisten', args => {
-  let objs = canvas.getObjects();
+  let objs = S.canvas.getObjects();
   if (args[0]) objs = objs.filter(o => (o.customName || o.type || '').toLowerCase().includes(args[0].toLowerCase()));
   if (!objs.length) { _cInfo('Keine Objekte'); return; }
   _cTable(objs.map((o, i) => ({
@@ -140,26 +140,26 @@ cmd('info', 'info [name/#idx]', 'Details zu einem Objekt', args => {
 cmd('select', 'select <name/#idx>', 'Objekt auswählen', args => {
   const obj = _conResolveObj(args[0]);
   if (!obj) return;
-  canvas.setActiveObject(obj);
-  canvas.requestRenderAll();
+  S.canvas.setActiveObject(obj);
+  S.canvas.requestRenderAll();
   _cOk('Ausgewählt: ' + (obj.customName || obj.type));
 });
 
 cmd('deselect', 'deselect', 'Auswahl aufheben', () => {
-  canvas.discardActiveObject(); canvas.requestRenderAll(); _cOk('Auswahl aufgehoben');
+  S.canvas.discardActiveObject(); S.canvas.requestRenderAll(); _cOk('Auswahl aufgehoben');
 });
 
 cmd('delete', 'delete <name/#idx>', 'Objekt löschen', args => {
   const obj = _conResolveObj(args[0]);
   if (!obj) return;
   const name = obj.customName || obj.type;
-  canvas.remove(obj); canvas.requestRenderAll();
-  _nextLabel = 'Konsole: Löschen'; saveHistory(); refreshLayersList();
+  S.canvas.remove(obj); S.canvas.requestRenderAll();
+  S._nextLabel = 'Konsole: Löschen'; saveHistory(); refreshLayersList();
   _cOk('Gelöscht: ' + name);
 });
 
 cmd('deleteAll', 'deleteAll', 'Alle Objekte löschen', () => {
-  canvas.clear(); _nextLabel = 'Konsole: Alle löschen'; saveHistory(); refreshLayersList();
+  S.canvas.clear(); S._nextLabel = 'Konsole: Alle löschen'; saveHistory(); refreshLayersList();
   _cOk('Canvas geleert');
 });
 
@@ -168,7 +168,7 @@ cmd('rename', 'rename <name/#idx> <neuerName>', 'Objekt umbenennen', args => {
   if (!obj) return;
   const old = obj.customName || obj.type;
   obj.customName = args.slice(1).join(' ');
-  canvas.requestRenderAll(); refreshLayersList();
+  S.canvas.requestRenderAll(); refreshLayersList();
   _cOk(`"${old}" → "${obj.customName}"`);
 });
 
@@ -178,7 +178,7 @@ cmd('move', 'move <name/#idx> <x> <y>', 'Objekt verschieben', args => {
   const x = parseFloat(args[1]), y = parseFloat(args[2]);
   if (isNaN(x) || isNaN(y)) { _cErr('Ungültige Koordinaten'); return; }
   obj.set({ left: x, top: y }); obj.setCoords();
-  canvas.requestRenderAll(); _nextLabel = 'Konsole: Verschieben'; saveHistory();
+  S.canvas.requestRenderAll(); S._nextLabel = 'Konsole: Verschieben'; saveHistory();
   _cOk(`${obj.customName || obj.type} → (${x}, ${y})`);
 });
 
@@ -188,7 +188,7 @@ cmd('scale', 'scale <name/#idx> <sx> [sy]', 'Objekt skalieren', args => {
   const sx = parseFloat(args[1]), sy = parseFloat(args[2] ?? args[1]);
   if (isNaN(sx)) { _cErr('Ungültiger Wert'); return; }
   obj.set({ scaleX: sx, scaleY: sy }); obj.setCoords();
-  canvas.requestRenderAll(); _nextLabel = 'Konsole: Skalieren'; saveHistory();
+  S.canvas.requestRenderAll(); S._nextLabel = 'Konsole: Skalieren'; saveHistory();
   _cOk(`Skaliert: ${sx} × ${sy}`);
 });
 
@@ -198,7 +198,7 @@ cmd('rotate', 'rotate <name/#idx> <grad>', 'Objekt drehen', args => {
   const deg = parseFloat(args[1]);
   if (isNaN(deg)) { _cErr('Ungültiger Winkel'); return; }
   obj.set('angle', deg); obj.setCoords();
-  canvas.requestRenderAll(); _nextLabel = 'Konsole: Rotieren'; saveHistory();
+  S.canvas.requestRenderAll(); S._nextLabel = 'Konsole: Rotieren'; saveHistory();
   _cOk(`Winkel: ${deg}°`);
 });
 
@@ -209,7 +209,7 @@ cmd('color', 'color <name/#idx> <farbe>', 'Farbe setzen', args => {
   if (!c) { _cErr('Farbe fehlt'); return; }
   if (obj.stroke) obj.set('stroke', c);
   if (obj.fill && obj.fill !== 'transparent') obj.set('fill', c);
-  canvas.requestRenderAll(); _nextLabel = 'Konsole: Farbe'; saveHistory();
+  S.canvas.requestRenderAll(); S._nextLabel = 'Konsole: Farbe'; saveHistory();
   _cOk('Farbe: ' + c);
 });
 
@@ -219,7 +219,7 @@ cmd('opacity', 'opacity <name/#idx> <0-1>', 'Deckkraft setzen', args => {
   const v = parseFloat(args[1]);
   if (isNaN(v)) { _cErr('Wert 0.0–1.0'); return; }
   obj.set('opacity', Math.max(0, Math.min(1, v)));
-  canvas.requestRenderAll(); saveHistory();
+  S.canvas.requestRenderAll(); saveHistory();
   _cOk('Deckkraft: ' + v);
 });
 
@@ -231,20 +231,20 @@ cmd('show',   'show <name/#idx>',   'Objekt anzeigen',   args => { _conSetVis(ar
 function _conSetLock(ref, val) {
   const obj = _conResolveObj(ref); if (!obj) return;
   obj.locked = val; obj.selectable = !val; obj.evented = !val;
-  canvas.requestRenderAll(); refreshLayersList();
+  S.canvas.requestRenderAll(); refreshLayersList();
   _cOk((val ? 'Gesperrt' : 'Entsperrt') + ': ' + (obj.customName || obj.type));
 }
 function _conSetVis(ref, val) {
   const obj = _conResolveObj(ref); if (!obj) return;
   obj.visible = val; obj.objVisible = val;
-  canvas.requestRenderAll(); refreshLayersList();
+  S.canvas.requestRenderAll(); refreshLayersList();
   _cOk((val ? 'Sichtbar' : 'Versteckt') + ': ' + (obj.customName || obj.type));
 }
 
-cmd('bringFwd',    'bringFwd <name/#idx>',    'Eine Ebene nach vorne',   args => { const o = _conResolveObj(args[0]); if(o){canvas.bringForward(o);canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('sendBwd',     'sendBwd <name/#idx>',     'Eine Ebene nach hinten',  args => { const o = _conResolveObj(args[0]); if(o){canvas.sendBackwards(o);canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('bringTop',    'bringTop <name/#idx>',    'Ganz nach vorne',         args => { const o = _conResolveObj(args[0]); if(o){canvas.bringToFront(o);canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
-cmd('sendBottom',  'sendBottom <name/#idx>',  'Ganz nach hinten',        args => { const o = _conResolveObj(args[0]); if(o){canvas.sendToBack(o);canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('bringFwd',    'bringFwd <name/#idx>',    'Eine Ebene nach vorne',   args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringForward(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('sendBwd',     'sendBwd <name/#idx>',     'Eine Ebene nach hinten',  args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendBackwards(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('bringTop',    'bringTop <name/#idx>',    'Ganz nach vorne',         args => { const o = _conResolveObj(args[0]); if(o){S.canvas.bringToFront(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
+cmd('sendBottom',  'sendBottom <name/#idx>',  'Ganz nach hinten',        args => { const o = _conResolveObj(args[0]); if(o){S.canvas.sendToBack(o);S.canvas.requestRenderAll();refreshLayersList();_cOk('OK');} });
 
 cmd('duplicate', 'duplicate <name/#idx>', 'Objekt duplizieren', args => {
   const obj = _conResolveObj(args[0]); if (!obj) return;
@@ -261,8 +261,8 @@ cmd('measure', 'measure <obj1> <obj2>', 'Abstand zwischen zwei Objekten', args =
   const cx1 = a.left + (a.width * a.scaleX) / 2, cy1 = a.top + (a.height * a.scaleY) / 2;
   const cx2 = b.left + (b.width * b.scaleX) / 2, cy2 = b.top + (b.height * b.scaleY) / 2;
   const px = Math.sqrt((cx2-cx1)**2 + (cy2-cy1)**2);
-  const label = settings.scale_px_per_mm > 0
-    ? (px / settings.scale_px_per_mm).toFixed(2) + ' mm  (' + Math.round(px) + ' px)'
+  const label = S.settings.scale_px_per_mm > 0
+    ? (px / S.settings.scale_px_per_mm).toFixed(2) + ' mm  (' + Math.round(px) + ' px)'
     : Math.round(px) + ' px';
   _cOk('Abstand (Mittelpunkt): ' + label);
   _cInfo('  Δx=' + Math.abs(cx2-cx1).toFixed(1) + '  Δy=' + Math.abs(cy2-cy1).toFixed(1));
@@ -278,12 +278,12 @@ cmd('area', 'area <name/#idx>', 'Fläche (px² / mm²)', args => {
   const obj = _conResolveObj(args[0]); if (!obj) return;
   const bb = obj.getBoundingRect(true);
   const px2 = bb.width * bb.height;
-  const s   = settings.scale_px_per_mm;
+  const s   = S.settings.scale_px_per_mm;
   _cOk(`Fläche: ${Math.round(px2)} px²` + (s > 0 ? `  =  ${(px2 / (s * s)).toFixed(2)} mm²` : ''));
 });
 
 cmd('count', 'count [typ]', 'Objekte zählen', args => {
-  const objs = canvas.getObjects();
+  const objs = S.canvas.getObjects();
   if (args[0]) {
     const n = objs.filter(o => o.type === args[0] || (o.customName||'').includes(args[0])).length;
     _cOk(`"${args[0]}": ${n}`);
@@ -297,7 +297,7 @@ cmd('count', 'count [typ]', 'Objekte zählen', args => {
 
 cmd('traceLen', 'traceLen <linkGrpPrefix>', 'Gesamtlänge einer Trace-Gruppe', args => {
   const gid = args[0];
-  const segs = canvas.getObjects().filter(o => o.type === 'line' && o.linkGroup?.startsWith(gid || ''));
+  const segs = S.canvas.getObjects().filter(o => o.type === 'line' && o.linkGroup?.startsWith(gid || ''));
   if (!segs.length) { _cErr('Keine Liniensegmente gefunden'); return; }
   let total = 0;
   segs.forEach(o => {
@@ -305,7 +305,7 @@ cmd('traceLen', 'traceLen <linkGrpPrefix>', 'Gesamtlänge einer Trace-Gruppe', a
     if (!p) return;
     total += Math.sqrt((p.x2-p.x1)**2 + (p.y2-p.y1)**2);
   });
-  const s = settings.scale_px_per_mm;
+  const s = S.settings.scale_px_per_mm;
   _cOk(`Länge (${segs.length} Segmente): ${Math.round(total)} px` + (s > 0 ? `  =  ${(total/s).toFixed(2)} mm` : ''));
 });
 
@@ -317,20 +317,20 @@ cmd('tool', 'tool <name>', 'Werkzeug aktivieren', args => {
   _cOk('Werkzeug: ' + (TOOL_NAMES[t] || t));
 });
 cmd('activeTool', 'activeTool', 'Aktives Werkzeug anzeigen', () => {
-  _cInfo('Aktiv: ' + (TOOL_NAMES[currentTool] || currentTool || '—'));
+  _cInfo('Aktiv: ' + (TOOL_NAMES[S.currentTool] || S.currentTool || '—'));
 });
 
 // --- ANSICHT ---
 cmd('zoom', 'zoom <faktor|in|out|reset>', 'Zoom setzen', args => {
   const a = args[0];
-  if (!a || a === 'reset') { zoomLevel = 1; panX = 0; panY = 0; applyTransform(); _cOk('Zoom: 100%'); return; }
-  if (a === 'in')  { zoomLevel = Math.min(ZOOM_MAX, zoomLevel * 1.25); applyTransform(); _cOk('Zoom: ' + Math.round(zoomLevel*100) + '%'); return; }
-  if (a === 'out') { zoomLevel = Math.max(ZOOM_MIN, zoomLevel / 1.25); applyTransform(); _cOk('Zoom: ' + Math.round(zoomLevel*100) + '%'); return; }
+  if (!a || a === 'reset') { S.zoomLevel = 1; S.panX = 0; S.panY = 0; applyTransform(); _cOk('Zoom: 100%'); return; }
+  if (a === 'in')  { S.zoomLevel = Math.min(ZOOM_MAX, S.zoomLevel * 1.25); applyTransform(); _cOk('Zoom: ' + Math.round(S.zoomLevel*100) + '%'); return; }
+  if (a === 'out') { S.zoomLevel = Math.max(ZOOM_MIN, S.zoomLevel / 1.25); applyTransform(); _cOk('Zoom: ' + Math.round(S.zoomLevel*100) + '%'); return; }
   const v = parseFloat(a);
   if (isNaN(v)) { _cErr('Ungültig'); return; }
-  zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v));
+  S.zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v));
   applyTransform();
-  _cOk('Zoom: ' + Math.round(zoomLevel*100) + '%');
+  _cOk('Zoom: ' + Math.round(S.zoomLevel*100) + '%');
 });
 
 cmd('fit', 'fit', 'Alles einpassen', () => {
@@ -339,12 +339,12 @@ cmd('fit', 'fit', 'Alles einpassen', () => {
 });
 
 cmd('center', 'center', 'Ansicht zentrieren', () => {
-  panX = 0; panY = 0; applyTransform(); _cOk('Zentriert');
+  S.panX = 0; S.panY = 0; applyTransform(); _cOk('Zentriert');
 });
 
 cmd('pan', 'pan <x> <y>', 'Pan setzen', args => {
-  panX = parseFloat(args[0]) || 0; panY = parseFloat(args[1]) || 0;
-  applyTransform(); _cOk(`Pan: (${panX}, ${panY})`);
+  S.panX = parseFloat(args[0]) || 0; S.panY = parseFloat(args[1]) || 0;
+  applyTransform(); _cOk(`Pan: (${S.panX}, ${S.panY})`);
 });
 
 cmd('zoomSel', 'zoomSel', 'Zoom auf Auswahl', () => {
@@ -355,65 +355,65 @@ cmd('zoomSel', 'zoomSel', 'Zoom auf Auswahl', () => {
 cmd('guide', 'guide <h|v> <pos>', 'Hilfslinie hinzufügen', args => {
   const axis = args[0], pos = parseFloat(args[1]);
   if ((axis !== 'h' && axis !== 'v') || isNaN(pos)) { _cErr('Syntax: guide h 100  oder  guide v 200'); return; }
-  if (axis === 'h') guideLines.h.push(pos);
-  else              guideLines.v.push(pos);
+  if (axis === 'h') S.guideLines.h.push(pos);
+  else              S.guideLines.v.push(pos);
   drawGuides(); saveGuides();
-  _nextLabel = `Hilfslinie ${axis.toUpperCase()} ${pos}`; saveHistory();
+  S._nextLabel = `Hilfslinie ${axis.toUpperCase()} ${pos}`; saveHistory();
   _cOk(`Hilfslinie ${axis === 'h' ? 'horizontal' : 'vertikal'} @ ${pos}px`);
 });
 
 cmd('guides', 'guides', 'Alle Hilfslinien auflisten', () => {
   const rows = [
-    ...guideLines.h.map((p, i) => ({ Typ: 'H', Idx: i, Pos: Math.round(p) })),
-    ...guideLines.v.map((p, i) => ({ Typ: 'V', Idx: i, Pos: Math.round(p) })),
+    ...S.guideLines.h.map((p, i) => ({ Typ: 'H', Idx: i, Pos: Math.round(p) })),
+    ...S.guideLines.v.map((p, i) => ({ Typ: 'V', Idx: i, Pos: Math.round(p) })),
   ];
   if (!rows.length) { _cInfo('Keine Hilfslinien'); return; }
   _cTable(rows);
 });
 
 cmd('clearGuides', 'clearGuides', 'Alle Hilfslinien löschen', () => {
-  guideLines.h = []; guideLines.v = []; drawGuides(); saveGuides();
-  _nextLabel = 'Alle Hilfslinien gelöscht'; saveHistory();
+  S.guideLines.h = []; S.guideLines.v = []; drawGuides(); saveGuides();
+  S._nextLabel = 'Alle Hilfslinien gelöscht'; saveHistory();
   _cOk('Alle Hilfslinien gelöscht');
 });
 
 // --- RASTER ---
 cmd('grid', 'grid <on|off>', 'Raster an/aus', args => {
   const v = args[0];
-  if (v === 'on')  gridState.enabled = true;
-  if (v === 'off') gridState.enabled = false;
-  if (!v) gridState.enabled = !gridState.enabled;
+  if (v === 'on')  S.gridState.enabled = true;
+  if (v === 'off') S.gridState.enabled = false;
+  if (!v) S.gridState.enabled = !S.gridState.enabled;
   saveGridState(); applyGridState();
-  _cOk('Raster: ' + (gridState.enabled ? 'an' : 'aus'));
+  _cOk('Raster: ' + (S.gridState.enabled ? 'an' : 'aus'));
 });
 
 cmd('gridSize', 'gridSize <px>', 'Rastergröße setzen', args => {
   const v = parseInt(args[0]);
   if (isNaN(v) || v < 2) { _cErr('Mindestens 2px'); return; }
-  gridState.size = v; saveGridState(); drawGrid();
+  S.gridState.size = v; saveGridState(); drawGrid();
   _cOk('Rastergröße: ' + v + 'px');
 });
 
 cmd('gridOrigin', 'gridOrigin <x> <y>', 'Raster-Ursprung setzen', args => {
-  gridState.originX = parseFloat(args[0]) || 0;
-  gridState.originY = parseFloat(args[1]) || 0;
+  S.gridState.originX = parseFloat(args[0]) || 0;
+  S.gridState.originY = parseFloat(args[1]) || 0;
   saveGridState(); drawGrid();
-  _cOk(`Ursprung: (${gridState.originX}, ${gridState.originY})`);
+  _cOk(`Ursprung: (${S.gridState.originX}, ${S.gridState.originY})`);
 });
 
 cmd('snap', 'snap <on|off>', 'Einrasten an/aus', args => {
   const v = args[0];
-  if (v === 'on')  gridState.snap = true;
-  if (v === 'off') gridState.snap = false;
-  if (!v) gridState.snap = !gridState.snap;
+  if (v === 'on')  S.gridState.snap = true;
+  if (v === 'off') S.gridState.snap = false;
+  if (!v) S.gridState.snap = !S.gridState.snap;
   saveGridState(); applyGridState();
-  _cOk('Snap: ' + (gridState.snap ? 'an' : 'aus'));
+  _cOk('Snap: ' + (S.gridState.snap ? 'an' : 'aus'));
 });
 
 // --- KAMERA ---
 cmd('device', 'device <name|demo>', 'Kameragerät wechseln', args => {
   const d = args[0] || 'demo';
-  settings.device = d;
+  S.settings.device = d;
   document.getElementById('deviceInput').value = d;
   applyDevice();
   _cOk('Gerät: ' + d);
@@ -421,27 +421,27 @@ cmd('device', 'device <name|demo>', 'Kameragerät wechseln', args => {
 
 cmd('freeze', 'freeze [on|off]', 'Stream einfrieren', args => {
   const v = args[0];
-  if (v === 'on')  _streamFrozen = true;
-  if (v === 'off') _streamFrozen = false;
-  if (!v) _streamFrozen = !_streamFrozen;
+  if (v === 'on')  S._streamFrozen = true;
+  if (v === 'off') S._streamFrozen = false;
+  if (!v) S._streamFrozen = !S._streamFrozen;
   const btn = document.getElementById('freezeBtn');
-  if (btn) { btn.textContent = _streamFrozen ? '▶ Fortsetzen' : '⏸ Einfrieren'; btn.style.background = _streamFrozen ? 'var(--clr-accent,#1bc9e9)' : ''; btn.style.color = _streamFrozen ? '#000' : ''; }
-  _cOk('Freeze: ' + (_streamFrozen ? 'an' : 'aus'));
+  if (btn) { btn.textContent = S._streamFrozen ? '▶ Fortsetzen' : '⏸ Einfrieren'; btn.style.background = S._streamFrozen ? 'var(--clr-accent,#1bc9e9)' : ''; btn.style.color = S._streamFrozen ? '#000' : ''; }
+  _cOk('Freeze: ' + (S._streamFrozen ? 'an' : 'aus'));
 });
 
 cmd('quality', 'quality <10-100>', 'JPEG-Qualität setzen', args => {
   const v = parseInt(args[0]);
   if (isNaN(v)) { _cErr('10–100'); return; }
-  settings.quality = Math.max(10, Math.min(100, v));
-  document.getElementById('qualityInput').value = settings.quality;
-  _cOk('Qualität: ' + settings.quality);
+  S.settings.quality = Math.max(10, Math.min(100, v));
+  document.getElementById('qualityInput').value = S.settings.quality;
+  _cOk('Qualität: ' + S.settings.quality);
 });
 
 cmd('fps', 'fps <1-60>', 'Max-FPS setzen', args => {
   const v = parseInt(args[0]);
   if (isNaN(v)) { _cErr('1–60'); return; }
-  settings.maxFps = Math.max(1, Math.min(60, v));
-  _cOk('Max-FPS: ' + settings.maxFps);
+  S.settings.maxFps = Math.max(1, Math.min(60, v));
+  _cOk('Max-FPS: ' + S.settings.maxFps);
 });
 
 // --- DATEI ---
@@ -454,7 +454,7 @@ cmd('export', 'export <png|svg|json>', 'Exportieren', args => {
   else {
     const link = document.createElement('a');
     link.download = 'scopecam_export.png';
-    link.href = canvas.toDataURL({ format: 'png', multiplier: 1 });
+    link.href = S.canvas.toDataURL({ format: 'png', multiplier: 1 });
     link.click();
     _cOk('PNG exportiert');
   }
@@ -462,7 +462,7 @@ cmd('export', 'export <png|svg|json>', 'Exportieren', args => {
 
 // --- EBENEN ---
 cmd('layers', 'layers', 'Alle Ebenen auflisten', () => {
-  _cTable(layers.map((l, i) => ({ '#': i, ID: l.id, Name: l.name, Sichtbar: l.visible ? 'ja' : 'nein' })));
+  _cTable(S.layers.map((l, i) => ({ '#': i, ID: l.id, Name: l.name, Sichtbar: l.visible ? 'ja' : 'nein' })));
 });
 
 cmd('layer', 'layer <name>', 'Ebene erstellen', args => {
@@ -474,7 +474,7 @@ cmd('layer', 'layer <name>', 'Ebene erstellen', args => {
 
 cmd('deleteLayer', 'deleteLayer <name>', 'Ebene löschen', args => {
   const name = args.join(' ');
-  const l = layers.find(x => x.name.toLowerCase() === name.toLowerCase());
+  const l = S.layers.find(x => x.name.toLowerCase() === name.toLowerCase());
   if (!l) { _cErr('Ebene nicht gefunden: ' + name); return; }
   deleteLayer(l.id);
   _cOk('Ebene gelöscht: ' + name);
@@ -509,7 +509,7 @@ cmd('clearHistory', 'clearHistory', 'History leeren', () => {
   const tab = getCurrentTab?.();
   if (!tab) return;
   tab.history = []; tab.historyIdx = -1;
-  _nextLabel = 'History geleert'; saveHistory();
+  S._nextLabel = 'History geleert'; saveHistory();
   _cOk('History geleert');
 });
 
@@ -523,7 +523,7 @@ cmd('ki', 'ki <prompt>', 'KI-Nachricht senden', args => {
 });
 
 cmd('clearKi', 'clearKi', 'KI-Kontext zurücksetzen', () => {
-  kiChatHistory = [];
+  S.kiChatHistory = [];
   document.getElementById('kiMessages').innerHTML = '';
   _cOk('KI-Kontext geleert');
 });
@@ -541,7 +541,7 @@ cmd('action', 'action <json>', 'KI-Aktion direkt ausführen (JSON)', args => {
     return;
   }
   executeAIActions(actions).then(() => {
-    canvas.requestRenderAll();
+    S.canvas.requestRenderAll();
     refreshLayersList();
     _cOk(`${actions.length} Aktion(en) ausgeführt`);
   }).catch(e => _cErr(String(e)));
@@ -559,7 +559,7 @@ cmd('create', 'create <typ> [optionen...]', 'Objekt erstellen. Typen: rect, circ
     opts[k] = isNaN(n) ? v : n;
   });
   executeAIActions([opts]).then(() => {
-    canvas.requestRenderAll(); refreshLayersList(); saveHistory();
+    S.canvas.requestRenderAll(); refreshLayersList(); saveHistory();
     _cOk(`${type} erstellt`);
   }).catch(e => _cErr(String(e)));
 });
@@ -576,7 +576,7 @@ cmd('setProps', 'setProps <name/#idx> <prop=wert...>', 'Fabric-Eigenschaften dir
     props[k] = isNaN(n) ? v : n;
   });
   executeAIActions([{ action: 'setProps', id: obj.objId, props }]).then(() => {
-    canvas.requestRenderAll(); saveHistory();
+    S.canvas.requestRenderAll(); saveHistory();
     _cOk('Eigenschaften gesetzt: ' + Object.keys(props).join(', '));
   });
 });
@@ -584,7 +584,7 @@ cmd('setProps', 'setProps <name/#idx> <prop=wert...>', 'Fabric-Eigenschaften dir
 cmd('linkIds', 'linkIds <objId1> <objId2> [...]', 'Objekte per objId verknüpfen', args => {
   if (args.length < 2) { _cErr('Mindestens 2 IDs'); return; }
   executeAIActions([{ action: 'link', ids: args }]).then(() => {
-    canvas.requestRenderAll(); refreshLayersList(); saveHistory();
+    S.canvas.requestRenderAll(); refreshLayersList(); saveHistory();
     _cOk('Verknüpft: ' + args.length + ' Objekte');
   });
 });
@@ -638,12 +638,12 @@ cmd('eval', 'eval <js>', 'JavaScript direkt ausführen (Vorsicht!)', args => {
 // ── Hilfs-Resolver ────────────────────────────────────────────────────────────
 function _conResolveObj(ref) {
   if (ref === undefined || ref === null) {
-    const sel = canvas.getActiveObject();
+    const sel = S.canvas.getActiveObject();
     if (!sel) { _cErr('Kein Objekt angegeben und nichts ausgewählt'); return null; }
     if (sel.type === 'activeSelection') return sel.getObjects()[0];
     return sel;
   }
-  const objs = canvas.getObjects();
+  const objs = S.canvas.getObjects();
   if (/^\d+$/.test(ref)) {
     const idx = parseInt(ref);
     if (idx < 0 || idx >= objs.length) { _cErr('Index außerhalb: ' + idx); return null; }
@@ -720,10 +720,10 @@ document.getElementById('consoleHelpBtn').addEventListener('click', () => { _con
 document.addEventListener('keydown', e => {
   if (e.key === 'F12') {
     e.preventDefault();
-    panelStates['console'].open = !panelStates['console'].open;
+    S.panelStates['console'].open = !S.panelStates['console'].open;
     applyPanel('console');
     savePanelStates();
-    if (panelStates['console'].open) setTimeout(() => _CON_IN.focus(), 80);
+    if (S.panelStates['console'].open) setTimeout(() => _CON_IN.focus(), 80);
   }
 }, true);
 

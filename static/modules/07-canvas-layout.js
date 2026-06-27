@@ -3,49 +3,49 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function syncCanvasSize() {
-  const w = videoCanvas.offsetWidth, h = videoCanvas.offsetHeight;
+  const w = S.videoCanvas.offsetWidth, h = S.videoCanvas.offsetHeight;
   if (w > 0 && h > 0) {
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.setWidth(w);
-      canvas.setHeight(h);
-      canvas.renderAll();
+    if (S.canvas.width !== w || S.canvas.height !== h) {
+      S.canvas.setWidth(w);
+      S.canvas.setHeight(h);
+      S.canvas.renderAll();
     }
     const { ox, oy } = getImgOffset();
-    if (canvas.wrapperEl) {
-      canvas.wrapperEl.style.position = 'absolute';
-      canvas.wrapperEl.style.left     = ox + 'px';
-      canvas.wrapperEl.style.top      = oy + 'px';
-      canvas.wrapperEl.style.width    = w  + 'px';
-      canvas.wrapperEl.style.height   = h  + 'px';
+    if (S.canvas.wrapperEl) {
+      S.canvas.wrapperEl.style.position = 'absolute';
+      S.canvas.wrapperEl.style.left     = ox + 'px';
+      S.canvas.wrapperEl.style.top      = oy + 'px';
+      S.canvas.wrapperEl.style.width    = w  + 'px';
+      S.canvas.wrapperEl.style.height   = h  + 'px';
     }
   }
   drawRulers();
 }
 
 window.addEventListener('resize', syncCanvasSize);
-new ResizeObserver(syncCanvasSize).observe(videoCanvas);
+new ResizeObserver(syncCanvasSize).observe(S.videoCanvas);
 
 // ── Canvas-Kontextmenü ────────────────────────────────────────────────────
 document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {
   e.preventDefault();
-  const target = canvas.findTarget(e);
+  const target = S.canvas.findTarget(e);
   if (!target) return;
 
   // Sicherstellen dass das Objekt ausgewählt ist
-  if (!canvas.getActiveObjects().includes(target)) {
-    canvas.setActiveObject(target);
-    canvas.renderAll();
+  if (!S.canvas.getActiveObjects().includes(target)) {
+    S.canvas.setActiveObject(target);
+    S.canvas.renderAll();
   }
 
-  const active = canvas.getActiveObjects();
+  const active = S.canvas.getActiveObjects();
   const isMulti = active.length > 1;
   const obj = isMulti ? null : target;
 
   const orderItems = obj ? [
-    { label: '▲▲ Ganz nach vorne', action: () => { canvas.bringToFront(obj); canvas.renderAll(); _nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▲  Eine Ebene vor',  action: () => { canvas.bringForward(obj); canvas.renderAll(); _nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▼  Eine Ebene zurück',action: () => { canvas.sendBackwards(obj); canvas.renderAll(); _nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
-    { label: '▼▼ Ganz nach hinten', action: () => { canvas.sendToBack(obj);  canvas.renderAll(); _nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▲▲ Ganz nach vorne', action: () => { S.canvas.bringToFront(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▲  Eine Ebene vor',  action: () => { S.canvas.bringForward(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▼  Eine Ebene zurück',action: () => { S.canvas.sendBackwards(obj); S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
+    { label: '▼▼ Ganz nach hinten', action: () => { S.canvas.sendToBack(obj);  S.canvas.renderAll(); S._nextLabel='Reihenfolge'; saveHistory(); refreshLayersList(); } },
     '-',
   ] : [];
 
@@ -68,16 +68,16 @@ document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {
   const isText = target?.type === 'i-text' || target?.type === 'text';
   const editTextItem = isText
     ? { label: '✏️ Label bearbeiten', action: () => {
-        if (currentTool !== 'select') activateTool('select');
+        if (S.currentTool !== 'select') activateTool('select');
         // Link-Gruppen-Expansion unterdrücken, nur Text-Objekt auswählen
-        _suppressLinkExpand = true;
-        canvas.setActiveObject(target);
-        canvas.renderAll();
-        _suppressLinkExpand = false;
+        S._suppressLinkExpand = true;
+        S.canvas.setActiveObject(target);
+        S.canvas.renderAll();
+        S._suppressLinkExpand = false;
         requestAnimationFrame(() => {
           target.enterEditing();
           target.selectAll();
-          canvas.renderAll();
+          S.canvas.renderAll();
         });
       }}
     : null;
@@ -96,22 +96,22 @@ document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {
         o.selectable = !o.locked;
         o.evented    = !o.locked;
       });
-      canvas.discardActiveObject(); canvas.renderAll(); saveHistory(); refreshLayersList();
+      S.canvas.discardActiveObject(); S.canvas.renderAll(); saveHistory(); refreshLayersList();
     }},
     { label: obj?.lockPosition ? '📍 Position freigeben' : '📍 Position sperren', action: () => {
       const targets = obj ? [obj] : active;
       targets.forEach(o => { o.lockPosition = !o.lockPosition; _applyObjLocks(o); });
-      canvas.renderAll(); saveHistory(); refreshLayersList();
+      S.canvas.renderAll(); saveHistory(); refreshLayersList();
     }},
     { label: obj?.lockSize ? '🔲 Größe freigeben' : '🔲 Größe sperren', action: () => {
       const targets = obj ? [obj] : active;
       targets.forEach(o => { o.lockSize = !o.lockSize; _applyObjLocks(o); });
-      canvas.renderAll(); saveHistory(); refreshLayersList();
+      S.canvas.renderAll(); saveHistory(); refreshLayersList();
     }},
     '-',
     { label: '🗑 Löschen', action: () => {
-      active.forEach(o => canvas.remove(o));
-      canvas.discardActiveObject(); canvas.renderAll(); saveHistory();
+      active.forEach(o => S.canvas.remove(o));
+      S.canvas.discardActiveObject(); S.canvas.renderAll(); saveHistory();
     }},
   ]);
 });
@@ -119,7 +119,7 @@ document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {
 document.getElementById('canvasWrapper').addEventListener('mousemove', e => {
   const rect = e.currentTarget.getBoundingClientRect();
   const { ox, oy } = getImgOffset();
-  const Z = zoomLevel;
+  const Z = S.zoomLevel;
   drawRulers((e.clientX - rect.left) / Z - ox, (e.clientY - rect.top) / Z - oy);
 });
 document.getElementById('canvasWrapper').addEventListener('mouseleave', () => drawRulers());

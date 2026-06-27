@@ -1,13 +1,13 @@
 
 // ── 1. Stream einfrieren ─────────────────────────────────────────────────────
-let _streamFrozen = false;
+S._streamFrozen = false;
 document.getElementById('freezeBtn').addEventListener('click', () => {
-  _streamFrozen = !_streamFrozen;
+  S._streamFrozen = !S._streamFrozen;
   const btn = document.getElementById('freezeBtn');
-  btn.textContent = _streamFrozen ? '▶ Fortsetzen' : '⏸ Einfrieren';
-  btn.style.background = _streamFrozen ? 'var(--clr-accent,#1bc9e9)' : '';
-  btn.style.color       = _streamFrozen ? '#000' : '';
-  setStatus(_streamFrozen ? 'Stream eingefroren' : 'Stream läuft');
+  btn.textContent = S._streamFrozen ? '▶ Fortsetzen' : '⏸ Einfrieren';
+  btn.style.background = S._streamFrozen ? 'var(--clr-accent,#1bc9e9)' : '';
+  btn.style.color       = S._streamFrozen ? '#000' : '';
+  setStatus(S._streamFrozen ? 'Stream eingefroren' : 'Stream läuft');
 });
 
 // ── 2. Winkeleinrasten beim Zeichnen ─────────────────────────────────────────
@@ -29,8 +29,8 @@ function _showSnapFeedback(canvasX, canvasY) {
   if (!_sfCtx || !_sfCanvas) return;
   const wrapper = document.getElementById('canvasWrapper');
   const { ox, oy } = getImgOffset();
-  const cssX = ox + canvasX * zoomLevel;
-  const cssY = oy + canvasY * zoomLevel;
+  const cssX = ox + canvasX * S.zoomLevel;
+  const cssY = oy + canvasY * S.zoomLevel;
   const dpr  = window.devicePixelRatio || 1;
   const rect  = wrapper.getBoundingClientRect();
 
@@ -50,11 +50,11 @@ function _showSnapFeedback(canvasX, canvasY) {
   _sfTimer = setTimeout(() => _sfCtx?.clearRect(0, 0, _sfCanvas.width, _sfCanvas.height), 600);
 }
 
-canvas.on('mouse:up', () => { _sfCtx?.clearRect(0, 0, _sfCanvas.width, _sfCanvas.height); });
+S.canvas.on('mouse:up', () => { _sfCtx?.clearRect(0, 0, _sfCanvas.width, _sfCanvas.height); });
 
 // ── 4. Zoom auf Auswahl ───────────────────────────────────────────────────────
 function zoomToSelection() {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (!objs.length) return;
   const bbs = objs.map(o => o.getBoundingRect(true));
   const x1  = Math.min(...bbs.map(b => b.left));
@@ -65,18 +65,18 @@ function zoomToSelection() {
   const wrapper = document.getElementById('canvasWrapper');
   const padding = 60;
   const newZ = Math.min(ZOOM_MAX, Math.min(
-    (wrapper.offsetWidth  - padding * 2) / (w * (videoCanvas.offsetWidth  / canvas.width)),
-    (wrapper.offsetHeight - padding * 2) / (h * (videoCanvas.offsetHeight / canvas.height))
+    (wrapper.offsetWidth  - padding * 2) / (w * (S.videoCanvas.offsetWidth  / S.canvas.width)),
+    (wrapper.offsetHeight - padding * 2) / (h * (S.videoCanvas.offsetHeight / S.canvas.height))
   ));
   // Mittelpunkt der Selection in Canvas-Bild-Koordinaten → auf Wrapper-Mitte zentrieren
   const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
   const { ox: ox0, oy: oy0 } = getImgOffset();
-  zoomLevel = newZ;
+  S.zoomLevel = newZ;
   // Nach setZoom den Pan neu berechnen (applyTransform wird aufgerufen)
   applyTransform();
   const { ox, oy } = getImgOffset();
-  panX = wrapper.offsetWidth  / 2 - (ox + cx) * newZ;
-  panY = wrapper.offsetHeight / 2 - (oy + cy) * newZ;
+  S.panX = wrapper.offsetWidth  / 2 - (ox + cx) * newZ;
+  S.panY = wrapper.offsetHeight / 2 - (oy + cy) * newZ;
   applyTransform();
 }
 document.getElementById('zoomToSelMenu').addEventListener('click', zoomToSelection);
@@ -88,18 +88,18 @@ function _flashObject(obj, on) {
   if (on) {
     _hoverHighlightObj = { obj, origOpacity: obj.opacity };
     obj.set('opacity', 0.45);
-    canvas.requestRenderAll();
+    S.canvas.requestRenderAll();
     _hoverHighlightObj.timer = setTimeout(() => {
       if (_hoverHighlightObj?.obj === obj) {
         obj.set('opacity', _hoverHighlightObj.origOpacity ?? 1);
-        canvas.requestRenderAll();
+        S.canvas.requestRenderAll();
         _hoverHighlightObj = null;
       }
     }, 300);
   } else if (_hoverHighlightObj?.obj === obj) {
     clearTimeout(_hoverHighlightObj.timer);
     obj.set('opacity', _hoverHighlightObj.origOpacity ?? 1);
-    canvas.requestRenderAll();
+    S.canvas.requestRenderAll();
     _hoverHighlightObj = null;
   }
 }
@@ -114,7 +114,7 @@ document.querySelectorAll('.pcb-pre').forEach(btn => {
 
 // ── 7. Trace-Gesamtlänge ──────────────────────────────────────────────────────
 function _updateTraceLength() {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (objs.length < 2) { document.getElementById('statusTraceLen').textContent = ''; return; }
   // Alle müssen Linien mit gleichem linkGroup sein
   const gid = objs[0].linkGroup;
@@ -127,23 +127,23 @@ function _updateTraceLength() {
     const dx = p.x2 - p.x1, dy = p.y2 - p.y1;
     total += Math.sqrt(dx * dx + dy * dy);
   });
-  const label = settings.scale_px_per_mm > 0
-    ? (total / settings.scale_px_per_mm).toFixed(2) + ' mm'
+  const label = S.settings.scale_px_per_mm > 0
+    ? (total / S.settings.scale_px_per_mm).toFixed(2) + ' mm'
     : Math.round(total) + ' px';
   document.getElementById('statusTraceLen').textContent = '∑ ' + label;
 }
-canvas.on('selection:created', _updateTraceLength);
-canvas.on('selection:updated', _updateTraceLength);
-canvas.on('selection:cleared', () => { document.getElementById('statusTraceLen').textContent = ''; });
+S.canvas.on('selection:created', _updateTraceLength);
+S.canvas.on('selection:updated', _updateTraceLength);
+S.canvas.on('selection:cleared', () => { document.getElementById('statusTraceLen').textContent = ''; });
 
 // ── 8. Grid-Origin ────────────────────────────────────────────────────────────
 let _gridOriginPickMode = false;
 
 document.getElementById('gridOriginX').addEventListener('change', e => {
-  gridState.originX = parseInt(e.target.value) || 0; saveGridState(); drawGrid();
+  S.gridState.originX = parseInt(e.target.value) || 0; saveGridState(); drawGrid();
 });
 document.getElementById('gridOriginY').addEventListener('change', e => {
-  gridState.originY = parseInt(e.target.value) || 0; saveGridState(); drawGrid();
+  S.gridState.originY = parseInt(e.target.value) || 0; saveGridState(); drawGrid();
 });
 document.getElementById('gridOriginPickBtn').addEventListener('click', () => {
   _gridOriginPickMode = true;
@@ -152,13 +152,13 @@ document.getElementById('gridOriginPickBtn').addEventListener('click', () => {
   document.getElementById('gridOriginPickBtn').style.color = '#000';
 });
 
-canvas.on('mouse:down', opt => {
+S.canvas.on('mouse:down', opt => {
   if (!_gridOriginPickMode) return;
-  const p = canvas.getPointer(opt.e);
-  gridState.originX = Math.round(p.x);
-  gridState.originY = Math.round(p.y);
-  document.getElementById('gridOriginX').value = gridState.originX;
-  document.getElementById('gridOriginY').value = gridState.originY;
+  const p = S.canvas.getPointer(opt.e);
+  S.gridState.originX = Math.round(p.x);
+  S.gridState.originY = Math.round(p.y);
+  document.getElementById('gridOriginX').value = S.gridState.originX;
+  document.getElementById('gridOriginY').value = S.gridState.originY;
   saveGridState(); drawGrid();
   _gridOriginPickMode = false;
   document.getElementById('gridOriginPickBtn').style.background = '';
@@ -167,27 +167,27 @@ canvas.on('mouse:down', opt => {
 });
 
 // ── 9. Schnellmessung ─────────────────────────────────────────────────────────
-let _measurePt1 = null;
-const _measureOverlay = document.getElementById('measureOverlay');
+S._measurePt1 = null;
+S._measureOverlay = document.getElementById('measureOverlay');
 
 function _measureShow(x1, y1, x2, y2, screenX, screenY) {
   const dx = x2 - x1, dy = y2 - y1;
   const px = Math.sqrt(dx * dx + dy * dy);
-  const label = settings.scale_px_per_mm > 0
-    ? (px / settings.scale_px_per_mm).toFixed(2) + ' mm  (' + Math.round(px) + ' px)'
+  const label = S.settings.scale_px_per_mm > 0
+    ? (px / S.settings.scale_px_per_mm).toFixed(2) + ' mm  (' + Math.round(px) + ' px)'
     : Math.round(px) + ' px';
-  _measureOverlay.textContent = '⇔ ' + label;
-  _measureOverlay.style.left = (screenX + 14) + 'px';
-  _measureOverlay.style.top  = (screenY - 10) + 'px';
-  _measureOverlay.style.display = 'block';
+  S._measureOverlay.textContent = '⇔ ' + label;
+  S._measureOverlay.style.left = (screenX + 14) + 'px';
+  S._measureOverlay.style.top  = (screenY - 10) + 'px';
+  S._measureOverlay.style.display = 'block';
 }
 
 // ── 10. Callout-Tool ──────────────────────────────────────────────────────────
-let _calloutAnchor = null;
-let _calloutPreviewLine = null;
+S._calloutAnchor = null;
+S._calloutPreviewLine = null;
 
 function _calloutClean() {
-  if (_calloutPreviewLine) { canvas.remove(_calloutPreviewLine); _calloutPreviewLine = null; }
+  if (S._calloutPreviewLine) { S.canvas.remove(S._calloutPreviewLine); S._calloutPreviewLine = null; }
 }
 
 // ── 11. Komponent-Bibliothek ──────────────────────────────────────────────────
@@ -225,10 +225,10 @@ function _renderCompLib() {
             o.linkGroup = gidMap[o.linkGroup];
           }
           o.left += 30; o.top += 30;
-          canvas.add(o);
+          S.canvas.add(o);
         });
-        canvas.requestRenderAll();
-        _nextLabel = `Bibliothek: ${entry.name}`;
+        S.canvas.requestRenderAll();
+        S._nextLabel = `Bibliothek: ${entry.name}`;
         saveHistory();
         refreshLayersList();
         setStatus(`"${entry.name}" eingefügt`);
@@ -253,7 +253,7 @@ document.getElementById('compLibCloseBtn').addEventListener('click', () => {
 document.getElementById('compLibSaveBtn').addEventListener('click', () => {
   const name = document.getElementById('compLibName').value.trim();
   if (!name) { setStatus('Bitte Namen eingeben'); return; }
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (!objs.length) { setStatus('Bitte Objekte auswählen'); return; }
   const serialized = objs.map(o => o.toObject(CUSTOM_PROPS));
   _compLib.push({ name, objects: serialized, created: Date.now() });
@@ -266,7 +266,7 @@ document.getElementById('compLibSaveBtn').addEventListener('click', () => {
 // ── 12. Batch-Umbenennen ──────────────────────────────────────────────────────
 function _applyBatchRename() {
   const pattern = document.getElementById('batchRenamePattern').value;
-  const objs    = canvas.getActiveObjects();
+  const objs    = S.canvas.getActiveObjects();
   if (!pattern || !objs.length) return;
   objs.forEach((o, i) => {
     const letter = String.fromCharCode(65 + i % 26);
@@ -275,8 +275,8 @@ function _applyBatchRename() {
       .replace(/%D/g, letter)
       .replace(/%n/g, o.customName || getObjLabel(o));
   });
-  canvas.requestRenderAll();
-  _nextLabel = 'Batch-Umbenennung';
+  S.canvas.requestRenderAll();
+  S._nextLabel = 'Batch-Umbenennung';
   saveHistory();
   refreshLayersList();
   document.getElementById('batchRenameModal').style.display = 'none';
@@ -284,7 +284,7 @@ function _applyBatchRename() {
 
 function _updateBatchPreview() {
   const pattern = document.getElementById('batchRenamePattern').value;
-  const objs    = canvas.getActiveObjects();
+  const objs    = S.canvas.getActiveObjects();
   if (!pattern || !objs.length) { document.getElementById('batchRenamePreview').textContent = ''; return; }
   const examples = objs.slice(0, 3).map((o, i) => {
     const letter = String.fromCharCode(65 + i % 26);
@@ -294,7 +294,7 @@ function _updateBatchPreview() {
 }
 
 document.getElementById('batchRenameBtn').addEventListener('click', () => {
-  const objs = canvas.getActiveObjects();
+  const objs = S.canvas.getActiveObjects();
   if (!objs.length) { setStatus('Bitte zuerst Objekte auswählen'); return; }
   document.getElementById('batchRenamePattern').value = '';
   document.getElementById('batchRenamePreview').textContent = '';

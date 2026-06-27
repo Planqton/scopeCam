@@ -5,9 +5,9 @@
 document.addEventListener('keydown', e => {
   // Escape: Werkzeug deaktivieren
   if (e.key === 'Escape') {
-    if (canvas.getActiveObject()?.isEditing) return;
-    canvas.discardActiveObject();
-    canvas.renderAll();
+    if (S.canvas.getActiveObject()?.isEditing) return;
+    S.canvas.discardActiveObject();
+    S.canvas.renderAll();
     activateTool('select');
     return;
   }
@@ -15,7 +15,7 @@ document.addEventListener('keydown', e => {
   // Kein Shortcut in Eingabefeldern
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-  if (matchSC(e, 'scale_prop')) { _aspectLocked = !_aspectLocked; _applyAspectLock(); setStatus(_aspectLocked ? '🔒 Proportionen gesperrt' : '🔓 Proportionen frei'); return; }
+  if (matchSC(e, 'scale_prop')) { S._aspectLocked = !S._aspectLocked; _applyAspectLock(); setStatus(S._aspectLocked ? '🔒 Proportionen gesperrt' : '🔓 Proportionen frei'); return; }
 
   if (matchSC(e, 'save_as'))    { e.preventDefault(); saveProjectAs(); return; }
   if (matchSC(e, 'save'))       { e.preventDefault(); saveProject(); return; }
@@ -28,15 +28,15 @@ document.addEventListener('keydown', e => {
 
   // Pfeilpfeile: selektierte Objekte verschieben
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
-    const objs = canvas.getActiveObjects();
+    const objs = S.canvas.getActiveObjects();
     if (!objs.length) return;
     e.preventDefault();
     const step = (e.shiftKey ? 10 : 1) * (_arrowStep());
     const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
     const dy = e.key === 'ArrowUp'   ? -step : e.key === 'ArrowDown'  ? step : 0;
     objs.forEach(o => { o.set({ left: o.left + dx, top: o.top + dy }); o.setCoords(); });
-    canvas.renderAll();
-    _nextLabel = 'Verschoben';
+    S.canvas.renderAll();
+    S._nextLabel = 'Verschoben';
     saveHistory();
     updatePropsPanel();
     return;
@@ -58,7 +58,7 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'd') { e.preventDefault(); duplicateSelected(); return; }
 
   // Polyline: Enter zum Abschließen
-  if (e.key === 'Enter' && currentTool === 'polyline') { _polyFinish(); return; }
+  if (e.key === 'Enter' && S.currentTool === 'polyline') { _polyFinish(); return; }
 });
 
 
@@ -69,10 +69,10 @@ document.addEventListener('keydown', e => {
   const layersPanel = document.querySelector('[data-panel="layers"]');
   if (!layersPanel || !layersPanel.contains(document.activeElement)) return;
   e.preventDefault();
-  const objs = canvas.getObjects().filter(o => !o.locked);
+  const objs = S.canvas.getObjects().filter(o => !o.locked);
   if (!objs.length) return;
   activateTool('select');
-  canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas }));
-  canvas.renderAll();
+  S.canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas: S.canvas }));
+  S.canvas.renderAll();
 }, true); // capture phase — fires before Fabric
 
