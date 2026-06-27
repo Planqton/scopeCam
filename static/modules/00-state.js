@@ -71,7 +71,7 @@
 export const S = {
 
   // ── Canvas & Core State (04-canvas-state.js) ────────────────────────────────
-  canvas:       null,    // fabric.Canvas — gesetzt in 04-canvas-state.js
+  canvas:       null,    // fabric.Canvas — sofort in 00-state.js erstellt (vor allen anderen Modulen)
   applyPanel:   null,    // S.applyPanel = function(id) {...} — gesetzt in 02-panels.js
   settings:     {},      // Kamera- & App-Einstellungen
   currentTool:  null,    // aktives Zeichenwerkzeug
@@ -151,6 +151,9 @@ export const S = {
     rename: true, link: true, layers: true, select: true, guides: true,
   },
 
+  // ── Mouse Events (10-mouse-events.js) ─────────────────────────────────────────
+  _textPreview: null,  // fabric.Text-Preview beim Text-Werkzeug
+
   // ── Tools Extra (28-tools-extra.js) ───────────────────────────────────────────
   _clipboard:        null,
   _snapToObjEnabled: true,
@@ -175,3 +178,10 @@ export const S = {
 };
 
 window.S = S; // console eval access
+
+// Canvas SOFORT erstellen — bevor irgendein anderes Modul ausgewertet wird.
+// Module-Scripts sind immer deferred (laufen nach dem Parsen des DOMs),
+// also sind das <canvas>-Element und fabric.js hier bereits verfügbar.
+S.canvas = new fabric.Canvas('canvas', { selection: false, renderOnAddRemove: true });
+fabric.Object.prototype.strokeUniform = true;  // Strichstärke bleibt beim Resizen konstant
+fabric.Object.prototype.objectCaching = false; // kein Bitmap-Cache → strokeUniform wirkt direkt

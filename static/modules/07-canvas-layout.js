@@ -1,5 +1,5 @@
 import { S } from './00-state.js';
-import { getImgOffset } from './22-rulers.js';
+import { getImgOffset, drawRulers } from './22-rulers.js';
 import { setObjectVisible } from './13-layers.js';
 import { getLinkGroupMembers, linkSelectedObjects, unlinkObjects } from './12-props-panel.js';
 
@@ -8,6 +8,7 @@ import { getLinkGroupMembers, linkSelectedObjects, unlinkObjects } from './12-pr
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function syncCanvasSize() {
+  if (!S.videoCanvas) return;
   const w = S.videoCanvas.offsetWidth, h = S.videoCanvas.offsetHeight;
   if (w > 0 && h > 0) {
     if (S.canvas.width !== w || S.canvas.height !== h) {
@@ -28,7 +29,7 @@ export function syncCanvasSize() {
 }
 
 window.addEventListener('resize', syncCanvasSize);
-new ResizeObserver(syncCanvasSize).observe(S.videoCanvas);
+new ResizeObserver(syncCanvasSize).observe(document.getElementById('videoCanvas'));
 
 // ── Canvas-Kontextmenü ────────────────────────────────────────────────────
 document.getElementById('canvasWrapper').addEventListener('contextmenu', e => {

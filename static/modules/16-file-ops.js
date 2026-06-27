@@ -1,5 +1,6 @@
 import { S } from './00-state.js';
-import { saveHistory, CUSTOM_PROPS, restoreHistory } from './14-history.js';
+import { saveHistory, CUSTOM_PROPS, restoreHistory, _isDirty, _markSaved, _updateDirtyIndicator } from './14-history.js';
+export { _isDirty, _markSaved, _updateDirtyIndicator } from './14-history.js';
 import { tabById, saveTabs, renderTabBar, loadCanvasFromJSON } from './08-tabs.js';
 import { refreshLayersList, loadLayersFromTab } from './13-layers.js';
 import { setStatus, scopeLog } from './03-status-log.js';
@@ -211,39 +212,6 @@ export async function _buildProjectBytes() {
 
 // Speicherpfad pro Tab verwalten
 S.currentSavePath = null;
-let _savedHistoryIdx = -1;  // S.historyIdx zum Zeitpunkt des letzten Speicherns
-
-export function _markSaved() {
-  _savedHistoryIdx = S.historyIdx;
-  const tab = tabById(S.activeTabId);
-  if (tab) tab._savedHistoryIdx = S.historyIdx;
-  _updateDirtyIndicator();
-}
-
-export function _isDirty() {
-  return S.historyIdx !== _savedHistoryIdx;
-}
-
-function _updateDirtyIndicator() {
-  document.querySelectorAll('.tab-item').forEach(el => {
-    const tid = el.dataset.tabId;
-    const tab = tabById(tid);
-    if (!tab) return;
-    const dirty = (tid === S.activeTabId)
-      ? _isDirty()
-      : (tab.historyIdx !== (tab._savedHistoryIdx ?? -1) && tab.history?.length > 0);
-    let dot = el.querySelector('.tab-dirty');
-    if (dirty && !dot) {
-      dot = document.createElement('span');
-      dot.className = 'tab-dirty';
-      dot.title = 'Ungespeicherte Änderungen';
-      const nameEl = el.querySelector('.tab-name');
-      if (nameEl) nameEl.before(dot); else el.prepend(dot);
-    } else if (!dirty && dot) {
-      dot.remove();
-    }
-  });
-}
 
 export function _setSavePath(path) {
   S.currentSavePath = path || null;

@@ -10,6 +10,39 @@ import { setStatus } from './03-status-log.js';
 
 export const CUSTOM_PROPS = ['customName', 'locked', 'layerId', 'objVisible', 'isDimension', 'dimPx', 'dimLabelOverride', 'linkGroup', 'objId', 'lockPosition', 'lockSize'];
 
+// ── Dirty-Tracking ─────────────────────────────────────────────────────────────
+let _savedHistoryIdx = -1;
+
+export function _isDirty() { return S.historyIdx !== _savedHistoryIdx; }
+
+export function _markSaved() {
+  _savedHistoryIdx = S.historyIdx;
+  const tab = tabById(S.activeTabId);
+  if (tab) tab._savedHistoryIdx = S.historyIdx;
+  _updateDirtyIndicator();
+}
+
+export function _updateDirtyIndicator() {
+  document.querySelectorAll('.tab-item').forEach(el => {
+    const tid = el.dataset.tabId;
+    const tab = tabById(tid);
+    if (!tab) return;
+    const dirty = (tid === S.activeTabId)
+      ? _isDirty()
+      : (tab.historyIdx !== (tab._savedHistoryIdx ?? -1) && tab.history?.length > 0);
+    let dot = el.querySelector('.tab-dirty');
+    if (dirty && !dot) {
+      dot = document.createElement('span');
+      dot.className = 'tab-dirty';
+      dot.title = 'Ungespeicherte Änderungen';
+      const nameEl = el.querySelector('.tab-name');
+      if (nameEl) nameEl.before(dot); else el.prepend(dot);
+    } else if (!dirty && dot) {
+      dot.remove();
+    }
+  });
+}
+
 const _TL_ICONS = {
   'Start': '🏁', 'Importiert': '📂', 'Linie': '╱', 'Pfeil': '→', 'Bemaßung': '↔',
   'Rechteck': '▭', 'Kreis': '○', 'Text': 'T', 'Freihand': '✏',

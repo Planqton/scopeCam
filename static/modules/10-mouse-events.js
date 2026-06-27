@@ -1,5 +1,5 @@
 import { S } from './00-state.js';
-import { getColor, getWidth, getFontSize, getFontFamily } from './09-tools.js';
+import { getColor, getWidth, getFontSize, getFontFamily, clearTextPreview } from './09-tools.js';
 import { saveHistory, CUSTOM_PROPS } from './14-history.js';
 import { refreshLayersList } from './13-layers.js';
 import { setStatus } from './03-status-log.js';
@@ -16,8 +16,6 @@ import { drawGuides } from './24-guides.js';
 // ── Text-Cursor-Preview ───────────────────────────────────────────────────
 // Zeigt den geplanten Text halbtransparent am Mauszeiger wenn Text-Tool aktiv.
 
-let textPreview = null;
-
 function getTextPreviewContent() {
   return document.getElementById('propTextContent').value.trim() || null;
 }
@@ -26,32 +24,32 @@ function syncTextPreview(x, y) {
   const content = getTextPreviewContent();
   if (S.currentTool !== 'text' || !content) { clearTextPreview(); return; }
 
-  if (!textPreview) {
-    textPreview = new fabric.Text(content, {
+  if (!S._textPreview) {
+    S._textPreview = new fabric.Text(content, {
       left: x, top: y,
       fill: getColor(), fontSize: getFontSize(), fontFamily: getFontFamily(),
       opacity: 0.45, selectable: false, evented: false,
     });
-    S.canvas.add(textPreview);
+    S.canvas.add(S._textPreview);
   } else {
-    textPreview.set({ left: x, top: y, text: content,
-                      fill: getColor(), fontSize: getFontSize(), fontFamily: getFontFamily() });
+    S._textPreview.set({ left: x, top: y, text: content,
+                         fill: getColor(), fontSize: getFontSize(), fontFamily: getFontFamily() });
   }
   S.canvas.renderAll();
-}
-
-export function clearTextPreview() {
-  if (textPreview) { S.canvas.remove(textPreview); textPreview = null; S.canvas.renderAll(); }
 }
 
 // Preview aktualisieren wenn Panel-Felder geändert werden
 ['propTextContent', 'propFontFamily', 'propFontSize'].forEach(id => {
   const el = document.getElementById(id);
-  el.addEventListener('input',  () => { if (textPreview) syncTextPreview(textPreview.left, textPreview.top); });
-  el.addEventListener('change', () => { if (textPreview) syncTextPreview(textPreview.left, textPreview.top); });
+  el.addEventListener('input',  () => { if (S._textPreview) syncTextPreview(S._textPreview.left, S._textPreview.top); });
+  el.addEventListener('change', () => { if (S._textPreview) syncTextPreview(S._textPreview.left, S._textPreview.top); });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+let isPointerDown = false;
+let startPoint    = null;
+let previewObj    = null;
 
 S.canvas.on('mouse:move', opt => {
   const p = S.canvas.getScenePoint(opt.e);

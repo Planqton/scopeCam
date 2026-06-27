@@ -8,6 +8,7 @@ import { applyDesign, populateDesignControls } from './20-design.js';
 import { setStatus, scopeLog } from './03-status-log.js';
 import { savePanelStates } from './02-panels.js';
 import { tabById } from './08-tabs.js';
+import { _updateCapturePathDisplay } from './15-capture.js';
 import { drawRulers } from './22-rulers.js';
 
 const settingsPage = document.getElementById('settingsPage');

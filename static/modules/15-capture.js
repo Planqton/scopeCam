@@ -36,7 +36,7 @@ const CAPTURE_PATH_KEY = 'scopecam_capture_path';
 
 function _capturePath() { return localStorage.getItem(CAPTURE_PATH_KEY) || ''; }
 
-function _updateCapturePathDisplay() {
+export function _updateCapturePathDisplay() {
   const el = document.getElementById('capturePathDisplay');
   if (el) el.textContent = _capturePath() || '—';
 }

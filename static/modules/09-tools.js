@@ -5,6 +5,11 @@ import { _updateMobTools } from './33-mobile.js';
 import { _openCalibrateModal, _polyCleanPreview, _polyFinish } from './28-tools-extra.js';
 import { setStatus } from './03-status-log.js';
 
+// Text-Preview-Helper (hier definiert, da 10-mouse-events ↔ 09-tools zirkulär wäre)
+export function clearTextPreview() {
+  if (S._textPreview) { S.canvas.remove(S._textPreview); S._textPreview = null; S.canvas.renderAll(); }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WERKZEUGE
 // ═══════════════════════════════════════════════════════════════════════════════
