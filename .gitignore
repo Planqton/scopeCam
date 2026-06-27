@@ -11,3 +11,4 @@ build/
 *.swo
 data/
 test.md
+gittoken.md
