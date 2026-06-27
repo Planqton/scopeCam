@@ -500,6 +500,50 @@ async def files_read(path: str = Query(...)):
     return FileResponse(target, media_type="application/octet-stream")
 
 
+@app.get("/api/files/lock")
+async def files_lock_status(path: str = Query(...)):
+    lock_path = _safe(path) + ".lock"
+    if os.path.exists(lock_path):
+        try:
+            with open(lock_path) as f:
+                info = json.load(f)
+            # Stale lock nach 30 Minuten automatisch freigeben
+            if time.time() - info.get("ts", 0) > 1800:
+                os.remove(lock_path)
+                return {"locked": False}
+            return {"locked": True, "by": info.get("by", "unbekannt"), "since": info.get("ts")}
+        except Exception:
+            return {"locked": False}
+    return {"locked": False}
+
+
+@app.post("/api/files/lock")
+async def files_lock(request: Request, path: str = Query(...)):
+    d = await request.json()
+    lock_path = _safe(path) + ".lock"
+    if os.path.exists(lock_path):
+        try:
+            with open(lock_path) as f:
+                info = json.load(f)
+            if time.time() - info.get("ts", 0) <= 1800:
+                raise HTTPException(409, f"Datei gesperrt von {info.get('by', '?')}")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+    with open(lock_path, "w") as f:
+        json.dump({"by": d.get("by", "Unbekannt"), "ts": time.time()}, f)
+    return {"ok": True}
+
+
+@app.delete("/api/files/lock")
+async def files_unlock(path: str = Query(...)):
+    lock_path = _safe(path) + ".lock"
+    if os.path.exists(lock_path):
+        os.remove(lock_path)
+    return {"ok": True}
+
+
 @app.post("/api/files/write")
 async def files_write(request: Request, path: str = Query(...)):
     target = _safe(path)
@@ -507,6 +551,10 @@ async def files_write(request: Request, path: str = Query(...)):
     body = await request.body()
     with open(target, "wb") as f:
         f.write(body)
+    # Lock nach erfolgreichem Speichern automatisch freigeben
+    lock_path = target + ".lock"
+    if os.path.exists(lock_path):
+        os.remove(lock_path)
     return {"ok": True, "size": len(body)}
 
 

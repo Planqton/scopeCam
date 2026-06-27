@@ -272,6 +272,7 @@ async function executeAIActions(actions) {
   if (!Array.isArray(actions)) return;
   _kiBatchMode = true;
   const findObj = id => canvas.getObjects().find(o => o.objId === id);
+  try {
 
   for (const act of actions) {
     if (!kiPermAllowed(act.action)) continue;
@@ -411,7 +412,9 @@ async function executeAIActions(actions) {
       _nextLabel = _kiLabel();
     } catch (_) {}
   }
-  _kiBatchMode = false;
+  } finally {
+    _kiBatchMode = false;
+  }
   canvas.renderAll();
   drawGuides();
   if (!_nextLabel) _nextLabel = 'KI-Aktion';
